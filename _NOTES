@@ -1,0 +1,36 @@
+Next
+>>>>>-- calculate distances and other stats and add to yellow stat area 
+when we reorder destinations, reorder array
+    option 1
+    -- click list add destination to array
+    -- add order as well
+    -- then when reorder list we can reorder elemtns in array either by changing the order number or by moving the whole element position
+    -- if we reorder whole then we can use next item as a way to link two destinations
+    -- if we just reorder according to the order number then we have to use a sort function when displaying destinations and making calculations
+    -- advantage is that this becomes a single source of truth
+option 2
+    -- after moving element or adding element loop through the new positions and repopuloate the array
+    -- then loop again making calculations for display
+
+    how does either way affect summary informations
+    -- easer if the data is in an array than in the dom
+
+-- deal with git
+
+-- delete locations from list and map 
+-- form to enter locations both on map and list
+-- sumarry data
+-- local storage
+-- css color scheme
+
+extra 
+--- Display points of interest between each destination This can be achieved by either looking at popular attractions or asking the user about their interests.
+--- For longer parts of the journey, suggest where users might take shortstops (i.e.hotels and their rates).
+--- Use the dates of the road trip and suggest events of interest that are on the path.
+
+
+sessionStorage.setItem('key', 'value');
+const storedValue = sessionStorage.getItem('key');
+// Remove a value from localStorage
+localStorage.removeItem('username');
+localStorage.clear();

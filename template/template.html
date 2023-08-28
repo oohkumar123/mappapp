@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <link
+            rel="stylesheet"
+            href="styles.css" />
+    </head>
+    <body>
+        <div class="destinations">
+            <h2 draggable="true">Destinations List</h2>
+            <div class="destinations-list sortable-list">
+                <article class="item 1" draggable="true">
+                    <div class="details">
+                        <div
+                            class="order"
+                            style="background-color: blueviolet">
+                            <h3>1</h3>
+                        </div>
+                        <div class="address">
+                            <p class="street">
+                                420 Monte Vista Avenue, Mill Valley, CA 94941
+                            </p>
+                            <p class="latlon">
+                                Latitude: 37.910970 | Longtitude: -122.563900
+                            </p>
+                        </div>
+                    </div>
+                </article>
+                <article class="stats">
+                    <p>Distance between destinations</p>
+                    <p>Time to drive at average 60 mph</p>
+                    <p>Gas fuel cost</p>
+                </article>
+                <article class="item 2" draggable="true">
+                    <div class="details">
+                        <div
+                            class="order"
+                            style="background-color: greenyellow">
+                            <h3>2</h3>
+                        </div>
+                        <div class="address">
+                            <p class="street">
+                                420 Monte Vista Avenue, Mill Valley, CA 94941
+                            </p>
+                            <p class="latlon">
+                                Latitude: 37.910970 | Longtitude: -122.563900
+                            </p>
+                        </div>
+                    </div>
+                </article>
+                <article class="stats">
+                    <p>Distance between destinations</p>
+                    <p>Time to drive at average 60 mph</p>
+                    <p>Gas fuel cost</p>
+                </article>
+                <article class="item 3" draggable="true">
+                    <div class="details">
+                        <div
+                            class="order"
+                            style="background-color: orangered">
+                            <h3>3</h3>
+                        </div>
+                        <div class="address">
+                            <p class="street">
+                                420 Monte Vista Avenue, Mill Valley, CA 94941
+                            </p>
+                            <p class="latlon">
+                                Latitude: 37.910970 | Longtitude: -122.563900
+                            </p>
+                        </div>
+                    </div>
+                </article>
+                <article class="stats">
+                    <p>Distance between destinations</p>
+                    <p>Time to drive at average 60 mph</p>
+                    <p>Gas fuel cost</p>
+                </article>
+                <article class="item 4" draggable="true">
+                    <div class="details">
+                        <div
+                            class="order"
+                            style="background-color:honeydew">
+                            <h3>4</h3>
+                        </div>
+                        <div class="address">
+                            <p class="street">
+                                420 Monte Vista Avenue, Mill Valley, CA 94941
+                            </p>
+                            <p class="latlon">
+                                Latitude: 37.910970 | Longtitude: -122.563900
+                            </p>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+        <script>
+            const sortableList = document.querySelector(".sortable-list"); // Get sortable list
+            const items = sortableList.querySelectorAll(".item"); // Get sortable children
+
+            items.forEach(item => { // add an event listener to each item where when dragging starts add class 'dragging' and remove when drag ends
+                
+                item.addEventListener("dragstart", () => {
+                    // Adding dragging class to item after a delay
+                    setTimeout(() => item.classList.add("dragging"), 0);
+                });
+                
+                item.addEventListener("dragend", () => {
+                    item.classList.remove("dragging");
+                    addStats(eval);
+                });
+            });
+
+            const addStats = (e) => {
+                let sortableList = document.querySelector(".sortable-list"); // Get sortable list
+                let items = sortableList.querySelectorAll(".item"); // Get sortable children
+
+                for (let i = 0; i < items.length; i++) {
+                    sortableList.append(items[i]);
+                    let article = document.createElement('article');
+                    article.classList.add('stats');
+
+                    article.innerHTML = `
+                        <p>Distance between destinations</p>
+                        <p>Time to drive at average 60 mph</p>
+                        <p>Gas fuel cost</p>
+                    `;
+
+                    if (items[i+1]) {
+                        sortableList.append(article);
+                    }
+                }
+            }
+            
+            const removeStats = (e) => {
+                let sortableList = document.querySelector(".sortable-list");
+                let stats = sortableList.querySelectorAll(".stats");
+                stats.forEach(e=>e.remove())
+            }
+            
+            const initSortableList = (e) => {
+
+                e.preventDefault();
+                removeStats(e)
+                
+                const draggingItem = document.querySelector(".dragging");
+                let siblings = [...sortableList.querySelectorAll(".item:not(.dragging)")];
+
+                let nextSibling = siblings.find(sibling => {
+                    return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2; 
+                });
+
+                sortableList.insertBefore(draggingItem, nextSibling);
+            }
+
+            sortableList.addEventListener("dragover", initSortableList); 
+            sortableList.addEventListener("dragenter", e => e.preventDefault());            
+        </script>
+    </body>
+</html>

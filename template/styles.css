@@ -1,0 +1,89 @@
+body {
+  background-color: red;
+}
+body .destinations {
+  background-color: blue;
+  width: 650px;
+  height: 650px;
+  margin: auto;
+  text-align: center;
+}
+body .destinations .destinations-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+body .destinations .destinations-list article.item {
+  width: 100%;
+}
+body .destinations .destinations-list article.item .details {
+  background-color: yellow;
+  width: 100%;
+  display: flex;
+  position: relative;
+}
+body .destinations .destinations-list article.item .details.dragging {
+  opacity: 0.6;
+}
+body .destinations .destinations-list article.item .details.dragging :where(.details, i) {
+  opacity: 0;
+}
+body .destinations .destinations-list article.item .details .order {
+  width: 40px;
+  background-color: green;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+body .destinations .destinations-list article.item .details .order h3 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 25px;
+  color: black;
+}
+body .destinations .destinations-list article.item .details .address {
+  flex-grow: 1;
+  background-color: orange;
+  padding-left: 10px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+  color: black;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-direction: column;
+}
+body .destinations .destinations-list article.item .details .address p {
+  margin: 0;
+}
+body .destinations .destinations-list article.item .details .address p.latlon {
+  font-size: 15px;
+}
+body .destinations .destinations-list article.item .details:before {
+  content: "d";
+  display: block;
+  width: 20px;
+  height: 20px;
+  background-color: #ddd;
+  position: absolute;
+  left: -10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: grab;
+}
+body .destinations .destinations-list article.stats {
+  background-color: yellow;
+  border-radius: 10px;
+  margin: auto;
+  padding: 10px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  color: black;
+  width: auto;
+  display: inline-block;
+}
+body .destinations .destinations-list article.stats p {
+  margin: 0;
+  padding: 0;
+}/*# sourceMappingURL=styles.css.map */
