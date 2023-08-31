@@ -3,19 +3,13 @@
 </template>
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
-import { mapState, mapMutations } from 'vuex';
 export default {
     data() {
         return {
             markerList: [],
-            map: {}
-        };
+            map: {},
+        }
     },
-    beforeCreate() {
-        //console.log("beforeCreate has been called");
-    },
-    created() {},
-    beforeMount() {},
     mounted() {
         this.initMap();
     },
@@ -28,7 +22,6 @@ export default {
             });
 
             loader.importLibrary('maps').then(async ({Map}) => { // Study this
-                const { AdvancedMarkerElement } = await google.maps.importLibrary("marker"); // can this be moved to loader?
                 const map = new Map(document.getElementById("map"), {
                 center: { lat: 37.4239163, lng: -122.0947209 },
                     zoom: 14,
@@ -36,49 +29,25 @@ export default {
                 });
                 
                 map.addListener("click", async (event) => {
-                    let markerAddress = await this.getAddressDetails(event.latLng); 
-                    const newMarker = document.createElement("div");
-                    newMarker.className = "address-marker";
-                    newMarker.textContent = markerAddress;
-                    new AdvancedMarkerElement({ map, position: event.latLng, content: newMarker });
+                    const geocoder = new window.google.maps.Geocoder();
+                    geocoder.geocode({ location: event.latLng }, (results, status) => {
+                        this.$store.commit('addPlaceId', results[0].place_id);            
+                        this.$store.dispatch("processMap");
+                        this.addmarker (map, event.latLng, results[0].formatted_address);
+                    });
                 });
             });
         },
-        async getAddressDetails(location) {
-            const geocoder = new google.maps.Geocoder();
-            let formatted_address = '';
-
-            await geocoder.geocode({ location: location }, (results, status) => {
-                if (status === google.maps.GeocoderStatus.OK) {
-                    if (results.length > 0) {
-                        formatted_address = results[0].formatted_address;
-                        this.updateMyArray(
-                            {
-                                placeId: results[0].place_id,
-                                address: formatted_address
-                            }
-                        )
-                    } else {
-                        console.log('No results found for the provided location.');
-                    }
-                } else {
-                    console.log('Geocoder failed due to:', status);
-                }
-            });
-            return formatted_address;
-        },
-        ...mapMutations(['updateArray']),
         
-        updateMyArray(newArray) {
-            this.updateArray(newArray);
-        },
-    },
-    computed: {
-        ...mapState({
-            newLocation: state => state.newLocation
-        }),
-    },
-};
+        async addmarker (map, position, formatted_address) {
+            const { AdvancedMarkerElement } = await google.maps.importLibrary("marker"); // can this be moved to loader?
+            const newMarker = document.createElement("div");
+            newMarker.className = "address-marker";
+            newMarker.textContent = formatted_address;
+            new AdvancedMarkerElement({ map, position, content: newMarker });
+        }
+    }
+}
 </script>
 
 <style lang="scss">
