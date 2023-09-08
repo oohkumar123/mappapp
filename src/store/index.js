@@ -26,24 +26,28 @@ export default createStore({
         },
         addPlaceId:  (state, placeId) => {
             state.placeIds.push(placeId);
+            //console.info('%cstate.placeIds: %o', 'color: red;font-size:12px', state.placeIds);
         },
-        updatePlaceIds:  (state, placeId) => {
-            console.clear();
-            state.placeIdsUpdated.push(placeId);
-            state.placeIds = state.placeIdsUpdated;
-            console.info('%cstate.placeIdsUpdated: %o', 'color: red;font-size:12px', state.placeIdsUpdated);
-            console.info('%cstate.placeIds: %o', 'color: red;font-size:12px', state.placeIds);
+        updatePlaceIds:  (state, placeIds) => {
+            //console.info('%cLocation: %o', 'color: green;font-size:12px', 'updatePlaceIds');
+            //console.info('%cplaceIds: %o', 'color: red;font-size:12px', placeIds);
+            state.placeIds = placeIds;
+            //console.info('%cstate.placeIds: %o', 'color: red;font-size:12px', state.placeIds);
         }
     },
     modules: {},
     actions: {
         processMap: (context) => {
+            //console.info('%cLocation: %o', 'color: green;font-size:12px', 'processMap');
+            let list = context.state.placeIds;
+            //console.info('%clist: %o', 'color: red;font-size:12px', list);
 
             let prev; // leave undefined
             let cur=[];
 
             context.state.loader.importLibrary('maps').then(async () => {
-                let list = context.state.placeIds;
+                //let list = context.state.placeIds;
+                //console.info('%clist: %o', 'color: red;font-size:12px', list);
                 
                 for (let i = 0; i < list.length; i++) {
                     let response = await new google.maps.Geocoder().geocode({placeId: list[i]});

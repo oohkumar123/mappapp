@@ -2,7 +2,7 @@
     <div id="destinations">
         <h2 draggable="true">Destinations List </h2>
         <div class="destinations-list sortable-list" ref="sortableList">
-            <article class="item" :data-placeId="item.placeId" draggable="true" ref="item" v-for="(item, index) in addressesList" :key="index">
+            <article class="item" :data-placeId="item.placeId" draggable="true" ref="item" v-for="(item, index) in this.$store.getters.addressesList" :key="index">
                 <div class="stats" v-if="item.stats">
                     Distance: {{ item.stats.distanceText }}
                     <br>
@@ -37,15 +37,18 @@ import { mapGetters } from 'vuex';
 export default {
     data() {
         return {
+            addressListLocal: {},
         };
     },
     updated () {
         console.info('%cLocation: %o', 'color: green;font-size:12px', 'updated');
-        this.initDestinations();
+
+        setTimeout(() => { 
+            this.initDestinations(); 
+            console.info('%c%o', 'color: red;font-size:12px', 'initdest triggered');}, 
+        1000);
     },
-    mounted() {
-        
-    },
+    mounted() {},
     methods: {
         initDestinations() {
 
@@ -78,22 +81,31 @@ export default {
                     return clientPos <= siblingPos; //if the client has moved above the current sibling
                 });
                 
-                //sortableList.insertBefore(draggingItem, nextSibling);
+                sortableList.insertBefore(draggingItem, nextSibling);
             }
             
             sortableList.addEventListener("dragover", initSortableList); 
             sortableList.addEventListener("dragenter", e => e.preventDefault());            
         },
         
-        reorderDestinationsArray () { 
+        reorderDestinationsArray () {  
+            let listArray = [];
             [...this.$refs.sortableList.children].forEach((el)=>{
-                this.$store.commit('updatePlaceIds', el.dataset['placeid']); 
-                this.$store.dispatch("processMap");
+                listArray.push(el.dataset['placeid']);            
             });
-        }
+            this.$store.commit('updatePlaceIds', listArray); 
+            this.$store.dispatch("processMap");
+        },
     },
     computed: {
-        ...mapGetters(['addressesList'])
+        addressesList () {
+            //console.info('%cthis.$store.getters.addressesList: %o', 'color: red;font-size:12px', this.$store.getters.addressesList);
+            this.$store.getters.addressesList.forEach(e=>{
+                console.info('%ce.placeId: %o', 'color: red;font-size:12px', e.placeId);
+
+            })
+            return this.$store.getters.addressesList;
+        }
     }
 };
 </script>
