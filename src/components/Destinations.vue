@@ -33,7 +33,6 @@
 </template>
 <script>
 import { mapGetters } from 'vuex';
-import { performAction, calculateValue } from '../lib/helper_functions.js';
 
 export default {
     data() {
@@ -42,8 +41,6 @@ export default {
     },
     updated () {
         console.info('%cLocation: %o', 'color: green;font-size:12px', 'updated');
-        performAction();
-        calculateValue();
         this.initDestinations();
     },
     mounted() {
