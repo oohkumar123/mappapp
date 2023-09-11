@@ -10,44 +10,24 @@ export default createStore({
         loader: new Loader({apiKey: "AIzaSyDlLrLnR2kTGVYhjtbu9ylIUm7eVTin2bk",version: "weekly"})
     },
     getters: {
-        locationsList: (state) => {
-            return state.locations;
-        },
         addressesList: (state) => {
             return state.addresses;
         },
-        statsList: (state) => {
-            return state.stats;
-        },
     },
     mutations: {
-        addAddress:  (state, address) => {
-            state.addresses.push(address);
-        },
         addPlaceId:  (state, placeId) => {
             state.placeIds.push(placeId);
-            //console.info('%cstate.placeIds: %o', 'color: red;font-size:12px', state.placeIds);
         },
-        updatePlaceIds:  (state, placeIds) => {
-            //console.info('%cLocation: %o', 'color: green;font-size:12px', 'updatePlaceIds');
-            //console.info('%cplaceIds: %o', 'color: red;font-size:12px', placeIds);
-            state.placeIds = placeIds;
-            //console.info('%cstate.placeIds: %o', 'color: red;font-size:12px', state.placeIds);
-        }
     },
     modules: {},
     actions: {
         processMap: (context) => {
-            //console.info('%cLocation: %o', 'color: green;font-size:12px', 'processMap');
-            let list = context.state.placeIds;
-            //console.info('%clist: %o', 'color: red;font-size:12px', list);
 
             let prev; // leave undefined
             let cur=[];
 
             context.state.loader.importLibrary('maps').then(async () => {
-                //let list = context.state.placeIds;
-                //console.info('%clist: %o', 'color: red;font-size:12px', list);
+                let list = context.state.placeIds;
                 
                 for (let i = 0; i < list.length; i++) {
                     let response = await new google.maps.Geocoder().geocode({placeId: list[i]});
@@ -66,13 +46,16 @@ export default createStore({
                         });
                         
                         if (response.rows[0].elements[0].status == 'OK') {
+                            console.info('%cresponse.rows[0]: %o', 'color: red;font-size:12px', response);
                             context.state.addresses[i] = {
                                 placeId:cur.place_id,
                                 address:cur.formatted_address, 
                                 latlng:cur.geometry.location,
                                 stats:{
                                     distanceText:response.rows[0].elements[0].distance.text, 
-                                    durationText:response.rows[0].elements[0].duration.text
+                                    durationText:response.rows[0].elements[0].duration.text,
+                                    distanceMeters:response.rows[0].elements[0].distance.value, 
+                                    durationSeconds:response.rows[0].elements[0].duration.value
                                 },
                             }
                             prev = cur;

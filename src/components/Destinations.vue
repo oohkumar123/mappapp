@@ -2,7 +2,7 @@
     <div id="destinations">
         <h2 draggable="true">Destinations List </h2>
         <div class="destinations-list sortable-list" ref="sortableList">
-            <article class="item" :data-placeId="item.placeId" draggable="true" ref="item" v-for="(item, index) in this.$store.getters.addressesList" :key="index">
+            <article class="item" :data-placeId="item.placeId" draggable="true" ref="item" v-for="(item, index) in listDestinations ()" :key="index">
                 <div class="stats" v-if="item.stats">
                     Distance: {{ item.stats.distanceText }}
                     <br>
@@ -16,8 +16,8 @@
                     </div>
                     <div class="address">
                         <p class="street">
-                            {{ item.placeId }} 
-                            <br>
+                            <!-- {{ item.placeId }}  
+                            <br>-->
                             {{ item.address }} 
                             <br>
                             {{ item.latlng }} 
@@ -25,88 +25,74 @@
                         <p class="latlon">
                         </p>
                     </div>
+                    <div class="updown" style="background-color: greenyellow">
+                        <div class="up">&uarr;</div>
+                        <div class="delete">&#10026;</div>
+                        <div class="down">&darr;</div>
+                    </div>
                 </div>
             </article>
-
         </div>
     </div>
+    <JourneyTotals :totalTime="totalTime" :totalDistance="totalDistance" :fuelCost="fuelCost"></JourneyTotals>
 </template>
 <script>
-import { mapGetters } from 'vuex';
+import JourneyTotals from './JourneyTotals.vue';
 
 export default {
+    components: {
+        JourneyTotals
+    },
     data() {
         return {
             addressListLocal: {},
+            totalTime:"",
+            totalDistance:"",
+            fuelCost:"",
+            count: 0
         };
     },
     updated () {
-        console.info('%cLocation: %o', 'color: green;font-size:12px', 'updated');
-
-        setTimeout(() => { 
-            this.initDestinations(); 
-            console.info('%c%o', 'color: red;font-size:12px', 'initdest triggered');}, 
-        1000);
+        
     },
     mounted() {},
     methods: {
-        initDestinations() {
-
-            let sortableList = this.$refs.sortableList;
+        listDestinations () {
+            this.calculateTotals (this.$store.getters.addressesList);
             
-            if (!sortableList) return;
+            return this.$store.getters.addressesList;
+        },
 
-            this.items = this.$refs.sortableList.querySelectorAll('.item');
-
-            this.items.forEach(item => { // add an event listener to each item where when dragging starts add class 'dragging' and remove when drag ends
-                
-                item.addEventListener("dragstart", () => {
-                    setTimeout(() => item.classList.add("dragging"), 0);
-                });
-                
-                item.addEventListener("dragend", () => {
-                    item.classList.remove("dragging");
-                    this.reorderDestinationsArray();
-                });
-            });
-
-            const initSortableList = (e) => {
-                e.preventDefault();
-                
-                const draggingItem = document.querySelector(".dragging");
-                let siblings = [...sortableList.querySelectorAll(".item:not(.dragging)")];
-                let nextSibling = siblings.find(sibling => {
-                    let clientPos = e.clientY + window.scrollY;
-                    let siblingPos = (sibling.offsetTop + (sibling.offsetHeight/2)); 
-                    return clientPos <= siblingPos; //if the client has moved above the current sibling
-                });
-                
-                sortableList.insertBefore(draggingItem, nextSibling);
+        calculateTotals (destinations) {
+            console.clear();
+            let totalSeconds = 0;
+            let totalMeters = 0;
+            destinations.forEach (item => {
+                if (item?.stats) {
+                    totalSeconds += item.stats.durationSeconds;
+                    totalMeters += item.stats.distanceMeters;
+                }
+            })
+            
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            
+            if (hours) {
+                this.totalTime = hours + " hours " + minutes + " minutes";
+            } else {
+                this.totalTime = minutes + " minutes";
             }
             
-            sortableList.addEventListener("dragover", initSortableList); 
-            sortableList.addEventListener("dragenter", e => e.preventDefault());            
-        },
-        
-        reorderDestinationsArray () {  
-            let listArray = [];
-            [...this.$refs.sortableList.children].forEach((el)=>{
-                listArray.push(el.dataset['placeid']);            
-            });
-            this.$store.commit('updatePlaceIds', listArray); 
-            this.$store.dispatch("processMap");
-        },
-    },
-    computed: {
-        addressesList () {
-            //console.info('%cthis.$store.getters.addressesList: %o', 'color: red;font-size:12px', this.$store.getters.addressesList);
-            this.$store.getters.addressesList.forEach(e=>{
-                console.info('%ce.placeId: %o', 'color: red;font-size:12px', e.placeId);
+            const miles = totalMeters / 1609.34;
+            this.totalDistance = miles.toFixed(1) + " miles";
 
-            })
-            return this.$store.getters.addressesList;
+            let gallonsUsed = (miles/21);
+            let cost = 5.5 * gallonsUsed;
+            this.fuelCost = "$"+cost.toFixed(2) + " at $5.5 per gallon";
+
         }
-    }
+    },
+    computed: {}
 };
 </script>
 
@@ -116,13 +102,13 @@ export default {
         width: 650px;
         margin: auto;
         text-align: center;
+        margin-top:20px;
         
         h2 {
             color: white;
             height: auto;
             padding: 0;
             margin: 0;
-            margin-top: 20px;
         }
         
         .destinations-list {
@@ -138,14 +124,36 @@ export default {
                     display: flex;
                     position: relative;
 
-                    &.dragging {
-                        opacity: 0.6;
+                    .updown {
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-around;
+                        align-items: center;
+                        width:20px;
+                        color: white;
+                        
+                        .up, .down, .delete {
+                            width:100%;
+                            height: 100%;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                        }
+                        
+                        .up {
+                            background-color: purple;
+                        }
+                        .delete {
+                            background-color: #ffffff;
+                            color: red;
+                            padding-top: 1px;
+                        }
+                        
+                        .down {
+                            background-color: orangered;
+                        }
                     }
                     
-                    &.dragging :where(.details, i) {
-                        opacity: 0;
-                    }
-
                     .order {
                         width: 40px;
                         background-color: green;
@@ -175,19 +183,6 @@ export default {
                                 font-size: 15px;
                             }
                         }
-                    }
-                    &:before {
-                        content: "d";
-                        display: block;
-                        width: 20px;
-                        height: 20px;
-                        background-color: #ddd;
-                        position: absolute;
-                        left: -10px;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        cursor: grab;
                     }
                 }
                 div.stats {
