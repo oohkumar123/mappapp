@@ -1,6 +1,7 @@
 <template>
     <div class="wrapper">
         <Map></Map>
+        <SearchBar></SearchBar>
         <Destinations></Destinations>
     </div>
 </template>
@@ -8,11 +9,13 @@
 <script>
 import Map from '../components/Map.vue';
 import Destinations from '../components/Destinations.vue';
+import SearchBar from '../components/SearchBar.vue';
 
 export default {
     components: {
         Map,
-        Destinations
+        Destinations,
+        SearchBar
     }
 }
 
@@ -22,7 +25,7 @@ export default {
 .wrapper {
     width: 80%;
     padding:20px;;
-    background-color: red;
+    background-color: $colorA;
     margin:auto;
     margin-bottom: 20px;
 

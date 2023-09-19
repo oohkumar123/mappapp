@@ -1,22 +1,22 @@
 <template>
-    <div id="destinations">
-        <h2 draggable="true">Destinations List </h2>
+    <div id="destinations" v-if="listDestinations ().length">
+        <div class="title">
+            <div class="space">&nbsp;</div>
+            <h2 draggable="true">Destinations List </h2>
+            <div class="clear-all" @click="deleteAll">Clear all</div>           
+        </div> 
         <div class="destinations-list sortable-list" ref="sortableList">
             <article class="item" :data-placeId="item.placeId" draggable="true" ref="item" v-for="(item, index) in listDestinations ()" :key="index">
-                <div class="stats" v-if="item.stats">
+                <div class="stats" v-if="item.stats" :style="{ background: item.stats.backgroundColor}">
                     Distance: {{ item.stats.distanceText }}
                     <br>
                     Duration: {{ item.stats.durationText }}
                 </div>
                 <div class="details">
-                    <div
-                        class="order"
-                        style="background-color: blueviolet">
-                        <h3>{{ index+1 }}</h3>
-                    </div>
+                    <div class="order"><p>{{ index+1 }}</p></div>
                     <div class="address">
                         <p class="street">
-                            <!-- {{ item.placeId }}  
+                            <!-- {{ item.placeId }}   
                             <br>-->
                             {{ item.address }} 
                             <br>
@@ -25,31 +25,32 @@
                         <p class="latlon">
                         </p>
                     </div>
-                    <div class="updown" style="background-color: greenyellow">
-                        <div class="up">&uarr;</div>
-                        <div class="delete">&#10026;</div>
-                        <div class="down">&darr;</div>
+                    <div class="updown">
+                        <div class="up"     v-if="index > 0" @click="moveUp(index)">&uarr;</div>
+                        <div class="delete" @click="deleteLoc(index)">&#10026;</div>
+                        <div class="down"   v-if="index != listDestinations ().length-1" @click="moveDown(index)">&darr;</div>
                     </div>
                 </div>
             </article>
         </div>
     </div>
-    <JourneyTotals :totalTime="totalTime" :totalDistance="totalDistance" :fuelCost="fuelCost"></JourneyTotals>
+    <JourneySummary :totalTime="totalTime" :totalDistance="totalDistance" :fuelCost="fuelCost" v-if="listDestinations ().length>1"></JourneySummary>
 </template>
 <script>
-import JourneyTotals from './JourneyTotals.vue';
+import JourneySummary from './JourneySummary.vue';
 
 export default {
     components: {
-        JourneyTotals
+        JourneySummary
     },
     data() {
         return {
-            addressListLocal: {},
             totalTime:"",
             totalDistance:"",
             fuelCost:"",
-            count: 0
+            milesConvert: 1609.34,
+            costPerGallon: 5.5
+            
         };
     },
     updated () {
@@ -57,14 +58,27 @@ export default {
     },
     mounted() {},
     methods: {
+        
+        deleteAll () {
+            this.$store.dispatch('deleteAll');
+        },
+        deleteLoc(index) {
+            this.$store.dispatch("deleteLoc", index);
+        },
+        moveUp(index) {
+            this.$store.dispatch("moveUp", index);
+        },
+        
+        moveDown(index) {
+            this.$store.dispatch("moveDown", index);
+        },
+        
         listDestinations () {
             this.calculateTotals (this.$store.getters.addressesList);
-            
             return this.$store.getters.addressesList;
         },
 
         calculateTotals (destinations) {
-            console.clear();
             let totalSeconds = 0;
             let totalMeters = 0;
             destinations.forEach (item => {
@@ -73,24 +87,29 @@ export default {
                     totalMeters += item.stats.distanceMeters;
                 }
             })
-            
+            this.totalTime = this.getTotalTime(totalSeconds);
+            this.totalDistance = this.getTotalDistance(totalMeters);
+            this.fuelCost = this.getTotalFuelCost(totalMeters)
+        },
+        
+        getTotalTime(totalSeconds) {
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
-            
-            if (hours) {
-                this.totalTime = hours + " hours " + minutes + " minutes";
-            } else {
-                this.totalTime = minutes + " minutes";
-            }
-            
-            const miles = totalMeters / 1609.34;
-            this.totalDistance = miles.toFixed(1) + " miles";
+            return (hours) ? hours + " hours " + minutes + " minutes": minutes + " minutes";
+        },
 
-            let gallonsUsed = (miles/21);
-            let cost = 5.5 * gallonsUsed;
-            this.fuelCost = "$"+cost.toFixed(2) + " at $5.5 per gallon";
-
+        getTotalDistance(totalMeters) {
+            const miles = totalMeters / this.milesConvert;
+            return miles.toFixed(1) + " miles";
+        },
+        
+        getTotalFuelCost(totalMeters) {
+            const miles = totalMeters / this.milesConvert;
+            const gallonsUsed = (miles/21);
+            const cost = this.costPerGallon * gallonsUsed;
+            return "$"+cost.toFixed(2) + " at $"+this.costPerGallon+" per gallon";
         }
+
     },
     computed: {}
 };
@@ -98,17 +117,36 @@ export default {
 
 <style lang="scss">
     #destinations {
-        background-color: blue;
+        background-color: $colorB;
         width: 650px;
         margin: auto;
         text-align: center;
         margin-top:20px;
         
-        h2 {
-            color: white;
-            height: auto;
-            padding: 0;
-            margin: 0;
+        .title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
+            .space {
+                flex: 1; 
+            }
+            
+            h2 {
+                color: white;
+                padding: 0;
+                margin: 0;
+                text-align: center;
+                flex: 1;
+            }
+            
+            .clear-all {
+                padding-right: 5px;
+                flex: 1;
+                text-align: right;
+                color:white;
+                cursor: pointer;
+            }
         }
         
         .destinations-list {
@@ -118,8 +156,8 @@ export default {
             align-items: center;
             article.item {
                 width:100%;
+                
                 .details {
-                    background-color: yellow;
                     width: 100%;
                     display: flex;
                     position: relative;
@@ -130,7 +168,7 @@ export default {
                         justify-content: space-around;
                         align-items: center;
                         width:20px;
-                        color: white;
+                        color: $colorA;
                         
                         .up, .down, .delete {
                             width:100%;
@@ -138,45 +176,41 @@ export default {
                             display: flex;
                             justify-content: center;
                             align-items: center;
+                            cursor: pointer;
+                            background-color: $colorD;
                         }
                         
-                        .up {
-                            background-color: purple;
-                        }
                         .delete {
-                            background-color: #ffffff;
-                            color: red;
                             padding-top: 1px;
                         }
                         
-                        .down {
-                            background-color: orangered;
-                        }
                     }
                     
                     .order {
-                        width: 40px;
-                        background-color: green;
+                        background-color: $colorD;
+                        padding: 0 4px;
                         display: flex;
                         justify-content: center;
                         align-items: center;
-                        h3 {
+                        p {
                             font-family: Arial, Helvetica, sans-serif;
-                            font-size: 25px;
-                            color: black;
+                            font-size: 15px;
+                            color: $colorA;
                         }
                     }
                     .address {
-                        flex-grow: 1;
-                        background-color: orange;
-                        padding-left: 10px;
+                        background-color: $colorC;
+                        padding-top:10px;
+                        padding-bottom: 10px;
                         font-family: Arial, Helvetica, sans-serif;
                         font-size: 20px;
-                        color: black;
+                        color: $colorA;
                         display: flex;
+                        flex-grow: 1;
                         justify-content: center;
                         align-items: center;
                         flex-direction: column;
+                        
                         p {
                             margin: 0;
                             &.latlon {
@@ -186,16 +220,16 @@ export default {
                     }
                 }
                 div.stats {
-                    background-color: yellow;
+                    background-color: $colorD;
                     border-radius: 10px;
                     margin:auto;
-                    font-family: Arial, Helvetica, sans-serif;
                     font-size: 15px;
-                    color: black;
+                    color: $colorA;
                     width:auto;
                     width: 300px;
                     font-size: 16px;
-
+                    padding-top:5px;
+                    padding-bottom: 5px;
                     p {margin:0; padding:0}
                 }
             }
