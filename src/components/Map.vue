@@ -2,7 +2,6 @@
     <div id="map"></div>
 </template>
 <script>
-import { Loader } from "@googlemaps/js-api-loader";
 export default {
     data() {
         return {
@@ -11,49 +10,8 @@ export default {
         }
     },
     mounted() {
-        this.initMap();
     },
-    methods: {
-        initMap() {
-
-            const loader = new Loader({
-                apiKey: "AIzaSyDlLrLnR2kTGVYhjtbu9ylIUm7eVTin2bk",
-                version: "weekly"
-            });
-
-            loader.importLibrary('maps').then(async ({Map}) => { // Study this
-                const map = new Map(document.getElementById("map"), {
-                    center: { lat: 37.9107347, lng: -122.5640172 },
-                    zoom: 14,
-                    mapId: "4504f8b37365c3d0",
-                });
-                this.$store.state.map = map;
-                
-                map.addListener("click", async (event) => {
-                    console.info('%cevent.latLng : %o', 'color: red;font-size:12px', event.latLng );
-                    const geocoder = new window.google.maps.Geocoder();
-                    geocoder.geocode({ location: event.latLng }, (results, status) => {
-                        let marker = this.addmarker (map, event.latLng, results[0].formatted_address);
-                        this.$store.dispatch(
-                            "addPlaceId", 
-                            {
-                                placeId:results[0].place_id, 
-                                marker
-                            }
-                        );
-                    });
-                });
-            });
-        },
-        
-        async addmarker (map, position, formatted_address) {
-            const { AdvancedMarkerElement } = await google.maps.importLibrary("marker"); // can this be moved to loader?
-            const newMarker = document.createElement("div");
-            newMarker.className = "address-marker";
-            newMarker.textContent = formatted_address;
-            return new AdvancedMarkerElement({ map, position, content: newMarker });
-        }
-    }
+    methods: {}
 }
 </script>
 

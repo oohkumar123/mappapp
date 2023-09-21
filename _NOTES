@@ -12,3 +12,30 @@ delete one item try to improve performance
 draw route on map - delete, redraw
 
 refactor map code to standalone file, make global
+
+
+Actions 
+this.$store.store.dispatch('addPlaceId', {placeId: results[0].place_id, marker});
+
+
+Mutations
+this.$store.commit('increment');
+
+Passing functions via emit
+this.$emit('custom-event', 'Hello from child!');
+<child-component @custom-event="handleCustomEvent"></child-component>
+
+
+Call Stack 
+Last-In-First-Out (LIFO) 
+
+Callback Queue
+First-In-First-Out (FIFO) 
+
+Event Loop:
+It follows a specific order of execution:
+When the call stack is empty, the event loop checks if there are any tasks in the callback queue.
+If there are tasks in the callback queue, the event loop moves the first task to the call stack, executing it.
+The process continues as long as there are tasks in the callback queue.
+
+This mechanism allows JavaScript to handle asynchronous tasks without blocking the main execution thread. 

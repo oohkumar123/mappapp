@@ -8,20 +8,19 @@
 
 </template>
 <script>
-import MapApi from '../lib/MapApi.js';
 export default {
     data() {
         return {
-            address: '420 Monte Vista Avenue, Mill Valley 94941',
-            mapApi: new MapApi()
+            address: '420 Monte Vista Avenue, Mill Valley 94941'
         }
     },
     mounted() {
     },
     methods: {
         async searchAddress() {
-            let payload = await this.mapApi.searchForAddress (this.address);
-            //this.$store.dispatch("addPlaceId", payload);
+            let payload = await this.MapApi.searchForAddress(this.address);
+            console.info('%cpayload: %o', 'color: red;font-size:12px', payload);
+            this.$store.dispatch('addPlaceId', payload);
         },
     }
 }
