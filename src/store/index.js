@@ -7,7 +7,8 @@ export default createStore({
         addresses: [],
         loader: new Loader({apiKey: "AIzaSyDlLrLnR2kTGVYhjtbu9ylIUm7eVTin2bk",version: "weekly"}),
         map:[],
-        mapRef:[]
+        mapRef:'',
+        markers:[]
     },
     getters: {
         addressesList: (state) => {
@@ -44,14 +45,13 @@ export default createStore({
         },
         
         deleteAll:  (context) => {
-            context.state.placeIds.forEach( (placeId) => {
-                console.info('%cplaceId: %o', 'color: red;font-size:12px', placeId);
-            })
-            context.state.addresses.forEach( (address) => {
-                console.info('%caddress: %o', 'color: red;font-size:12px', address);
-                address.marker();
+            // context.state.placeIds.forEach( (placeId) => {
+            //     console.info('%cplaceId: %o', 'color: red;font-size:12px', placeId);
+            // })
+            context.state.markers.forEach( (marker) => {
+                console.info('%cmarker to delete: %o', 'color: red;font-size:12px', marker.marker);
+                marker.marker.setMap(null);
             });
-            context.dispatch('loadMap');
             context.state.placeIds = [];
             context.state.addresses = [];
         },
@@ -89,6 +89,7 @@ export default createStore({
                 cur = response.results[0];
 
                 let marker = new google.maps.Marker({ position:cur.geometry.location, label:{text:cur.formatted_address, className:'address-marker', map}});
+                console.info('%cmarker 1: %o', 'color: red;font-size:12px', marker);
                 marker.setMap(map);
         
                 if (prev) {
@@ -129,23 +130,25 @@ export default createStore({
                                         origin,
                                         destination,
                                         backgroundColor: lineColors[i-1],
-                                    },
-                                    marker:()=>{console.info('%c%o', 'color: red;font-size:12px', 'Here I am 2'); marker.set(null);}
+                                    }
                                 }
+                                context.state.markers[i] = {
+                                    marker
+                                };
                             }
                         });
-
-    
                         prev = cur;
                     }
                 } else {
                     context.state.addresses[i] = {
                         placeId:cur.place_id,
                         address:cur.formatted_address, 
-                        latlng:cur.geometry.location,
-                        marker:()=>{console.info('%c%o', 'color: red;font-size:12px', 'Here I am 1'); marker.set(null);}
+                        latlng:cur.geometry.location
                     };
-                    prev = cur;
+                    context.state.markers[i] = {
+                        marker
+                    };
+        prev = cur;
                 }
             }
         },
