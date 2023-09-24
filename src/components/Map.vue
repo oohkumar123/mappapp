@@ -8,8 +8,6 @@
     </div>
 </template>
 <script>
-import { Loader } from "@googlemaps/js-api-loader";
-
 export default {
     data() {
         return {
@@ -20,31 +18,22 @@ export default {
 
     async mounted() {
         await this.loadMap();            
-        this.addClick();
+        this.addClick ();
     },
 
     methods: {
+        
         async loadMap() {
-            this.loader = new Loader({
-                apiKey: "AIzaSyDlLrLnR2kTGVYhjtbu9ylIUm7eVTin2bk",
-                version: "weekly"
-            });
-            let {Map} = await this.loader.importLibrary('maps');
-            this.map = new Map(this.$refs.map, {
-                center: { lat: 37.9107347, lng: -122.5640172 },
-                zoom: 14,
-                mapId: "4504f8b37365c3d0",
-            });
-            this.$store.commit('storeMap', this.map);
+            this.$store.commit('storeMapRef', this.$refs.map);
+            await this.$store.dispatch('loadMap');
+            this.map = this.$store.getters.getMap
         },
         
         addClick () {
             this.map.addListener("click", (event) => {         
                 const geocoder = new window.google.maps.Geocoder();
                 geocoder.geocode({ location: event.latLng }, (results, status) => {
-                    let marker = this.addmarker (event.latLng, results[0].formatted_address);
-                    console.info('%cmarker 2: %o', 'color: red;font-size:12px', marker);
-                    this.$store.dispatch('addPlaceId', {placeId: results[0].place_id, marker});
+                    this.$store.dispatch('addPlaceId', {placeId: results[0].place_id});
                 });
             });
         },
@@ -52,18 +41,16 @@ export default {
         searchAddress() {
             const geocoder = new window.google.maps.Geocoder();
             geocoder.geocode({ address:this.address }, (results, status) => {
-                let marker = this.addmarker (results[0].geometry.location, results[0].formatted_address);
-                this.$store.dispatch('addPlaceId', {placeId: results[0].place_id, marker});
+                this.$store.dispatch('addPlaceId', {placeId: results[0].place_id});
             });
         },
         
-        addmarker (myLatlng, formatted_address) {
-            var marker = new google.maps.Marker({ position:myLatlng, label:{text:formatted_address, className:'address-marker', map: this.map}});
-            console.info('%cmarker 1: %o', 'color: red;font-size:12px', marker);
-            marker.setMap(this.map);
-            return () => marker.setMap(null);
-        }
-    }
+    },
+    computed: {
+        getMap() {
+            //this.map = ;
+        },
+    },
 }
 </script>
 

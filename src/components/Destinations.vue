@@ -3,7 +3,7 @@
         <div class="title">
             <div class="space">&nbsp;</div>
             <h2 @click="getMap">Destinations List </h2>
-            <div class="clear-all" @click="window.location.reload()">Clear all</div>           
+            <div class="clear-all" @click="deleteAll">Clear all</div>           
         </div> 
         <div class="destinations-list sortable-list" ref="sortableList">
             <article class="item" :data-placeId="item.placeId" draggable="true" ref="item" v-for="(item, index) in listDestinations ()" :key="index">
@@ -54,6 +54,7 @@ export default {
             
         };
     },
+    emits: ["deleteAll"],
     updated () {
         
     },
@@ -61,10 +62,11 @@ export default {
         //this.getMap();
     },
     methods: {
+        clearAll () {
+            this.$store.dispatch('deleteAll');
+        },
         getMap(){
             this.map = this.$store.getters.getMap;
-            console.info('%cmap 2: %o', 'color: red;font-size:12px', this.map);
-
         },
         deleteAll () {
             this.$store.dispatch('deleteAll');
