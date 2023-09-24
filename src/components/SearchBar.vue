@@ -19,7 +19,6 @@ export default {
     methods: {
         async searchAddress() {
             let payload = await this.MapApi.searchForAddress(this.address);
-            console.info('%cpayload: %o', 'color: red;font-size:12px', payload);
             this.$store.dispatch('addPlaceId', payload);
         },
     }

@@ -1,7 +1,6 @@
 <template>
     <div class="wrapper">
         <Map></Map>
-        <SearchBar></SearchBar>
         <Destinations></Destinations>
     </div>
 </template>
@@ -9,13 +8,11 @@
 <script>
 import Map from '../components/Map.vue';
 import Destinations from '../components/Destinations.vue';
-import SearchBar from '../components/SearchBar.vue';
 
 export default {
     components: {
         Map,
-        Destinations,
-        SearchBar
+        Destinations
     }
 }
 

@@ -8,28 +8,45 @@ export default createStore({
         addresses: [],
         previous: 0,
         loader: new Loader({apiKey: "AIzaSyDlLrLnR2kTGVYhjtbu9ylIUm7eVTin2bk",version: "weekly"}),
-        map:[]
+        map:[],
+        count:0
     },
     getters: {
         addressesList: (state) => {
             return state.addresses;
         },
+        getMap: (state) => {
+            return state.map;
+        },
+        count: (state) => {
+            return state.count;
+        },
     },
     mutations: {
+        storeMap (state, payload) {
+            state.map = payload;
+            console.info('%cstate.map: %o', 'color: red;font-size:12px', state.map);
+        },
+        updateCount (state) {
+            console.info('%cLocation: %o', 'color: green;font-size:12px', 'updateCount');
+            state.count++;
+            console.info('%cstate.count: %o', 'color: red;font-size:12px', state.count);
+        }
     },
     modules: {},
     actions: {
-        deleteAll: async (context) => {
-            context.state.placeIds.forEach(async (m) => {
-                let t = await m.marker;
-                t.setMap(null);
+        deleteAll:  (context) => {
+            context.state.placeIds.forEach( (placeId) => {
+                console.info('%cplaceId: %o', 'color: red;font-size:12px', placeId);
+                placeId.marker();
+                //placeId.stats.directionsRend();
             })
-            context.state.placeIds = [];
-            context.state.addresses = [];
-            console.info('%cmap: %o', 'color: red;font-size:12px', context.state.map);
-            let directionsRenderer = new google.maps.DirectionsRenderer();
-            console.info('%cdirectionsRenderer: %o', 'color: red;font-size:12px', directionsRenderer);
-            directionsRenderer.setMap();
+            context.state.addresses.forEach( (placeId) => {
+                console.info('%cplaceId: %o', 'color: red;font-size:12px', placeId);
+                //placeId.marker();
+                //placeId.directionsRend();
+            })
+
         },
         deleteLoc: async (context, placeId) => {
             let t = await context.state.placeIds[placeId].marker;
@@ -56,73 +73,74 @@ export default createStore({
             context.state.placeIds.push(placeObj);
             context.dispatch('processMap');
         },
-        processMap: (context) => {
+         processMap: async (context) => {
             let list = context.state.placeIds;
             let prev; // leave undefined
             let cur=[];
             let map = context.state.map;
             let lineColors = ['red','green','blue','yellow','orange','pink']
 
-            context.state.loader.importLibrary('maps').then(async () => {
-                
-                for (let i = 0; i < list.length; i++) {
-                    let response = await new google.maps.Geocoder().geocode({placeId: list[i].placeId});
-                    cur = response.results[0];
+            for (let i = 0; i < list.length; i++) {
+                let response = await new google.maps.Geocoder().geocode({placeId: list[i].placeId});
+                cur = response.results[0];
 
-                    if (prev) {
-                        const origin = new google.maps.LatLng(prev.geometry.location);
-                        //console.info('%corigin: %o', 'color: red;font-size:12px', origin);
-                        const destination = new google.maps.LatLng(cur.geometry.location);
-                        const service = new google.maps.DistanceMatrixService();
-                        
-                        let response = await service.getDistanceMatrix({
-                            origins: [origin],
-                            destinations: [destination],
-                            travelMode: 'DRIVING',
-                            unitSystem: google.maps.UnitSystem.IMPERIAL,
-                        });
-                        
-                        if (response.rows[0].elements[0].status == 'OK') {
-                            context.state.addresses[i] = {
-                                placeId:cur.place_id,
-                                address:cur.formatted_address, 
-                                latlng:cur.geometry.location,
-                                stats:{
-                                    distanceText:       response.rows[0].elements[0].distance.text, 
-                                    durationText:       response.rows[0].elements[0].duration.text,
-                                    distanceMeters:     response.rows[0].elements[0].distance.value, 
-                                    durationSeconds:    response.rows[0].elements[0].duration.value,
-                                    origin,
-                                    destination,
-                                    backgroundColor: lineColors[i-1],
-                                },
-                            }
-                            var directionsService = new google.maps.DirectionsService();
-                            var directionsRenderer = new google.maps.DirectionsRenderer({
-                                map: map,
-                                polylineOptions: {
-                                    strokeColor: lineColors[i-1],
-                                    strokeWeight: 5,
-                                    strokeOpacity: 0.7
-                                }
-                            });
-                            var request = {origin: origin,destination: destination,travelMode: 'DRIVING'};
-                            directionsService.route(request, function(result, status) {
-                                if (status == 'OK') {directionsRenderer.setDirections(result);}
-                            });
-        
-                            prev = cur;
+                if (prev) {
+                    const origin = new google.maps.LatLng(prev.geometry.location);
+                    const destination = new google.maps.LatLng(cur.geometry.location);
+                    const service = new google.maps.DistanceMatrixService();
+                    
+                    let response = await service.getDistanceMatrix({
+                        origins: [origin],
+                        destinations: [destination],
+                        travelMode: 'DRIVING',
+                        unitSystem: google.maps.UnitSystem.IMPERIAL,
+                    });
+                    var directionsService = new google.maps.DirectionsService();
+                    var directionsRenderer = new google.maps.DirectionsRenderer({
+                        map: context.state.map,
+                        polylineOptions: {
+                            strokeColor: lineColors[i-1],
+                            strokeWeight: 5,
+                            strokeOpacity: 0.7
                         }
-                    } else {
-                        context.state.addresses[i] = {
-                            placeId:cur.place_id,
-                            address:cur.formatted_address, 
-                            latlng:cur.geometry.location
-                        };
+                    });
+                
+                    if (response.rows[0].elements[0].status == 'OK') {
+                        var request = {origin: origin,destination: destination,travelMode: 'DRIVING'};
+                        directionsService.route(request, function(result, status) {
+                            if (status == 'OK') {
+                                directionsRenderer.setDirections(result);
+                                context.state.addresses[i] = {
+                                    placeId:cur.place_id,
+                                    address:cur.formatted_address, 
+                                    latlng:cur.geometry.location,
+                                    stats:{
+                                        distanceText:       response.rows[0].elements[0].distance.text, 
+                                        durationText:       response.rows[0].elements[0].duration.text,
+                                        distanceMeters:     response.rows[0].elements[0].distance.value, 
+                                        durationSeconds:    response.rows[0].elements[0].duration.value,
+                                        origin,
+                                        destination,
+                                        backgroundColor: lineColors[i-1],
+                                        directionsRend: ()=>directionsRenderer.setDirections(null)
+                                    },
+                                }
+                                console.info('%ccontext.state.addresses[i]: %o', 'color: red;font-size:12px', context.state.addresses[i]);
+                            }
+                        });
+
+    
                         prev = cur;
                     }
+                } else {
+                    context.state.addresses[i] = {
+                        placeId:cur.place_id,
+                        address:cur.formatted_address, 
+                        latlng:cur.geometry.location
+                    };
+                    prev = cur;
                 }
-            })
+            }
         },
     },
 });

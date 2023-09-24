@@ -2,8 +2,8 @@
     <div id="destinations" v-if="listDestinations ().length">
         <div class="title">
             <div class="space">&nbsp;</div>
-            <h2 draggable="true">Destinations List </h2>
-            <div class="clear-all" @click="deleteAll">Clear all</div>           
+            <h2 @click="getMap">Destinations List </h2>
+            <div class="clear-all" @click="window.location.reload()">Clear all</div>           
         </div> 
         <div class="destinations-list sortable-list" ref="sortableList">
             <article class="item" :data-placeId="item.placeId" draggable="true" ref="item" v-for="(item, index) in listDestinations ()" :key="index">
@@ -38,7 +38,7 @@
 </template>
 <script>
 import JourneySummary from './JourneySummary.vue';
-
+import { mapState } from 'vuex';
 export default {
     components: {
         JourneySummary
@@ -49,16 +49,23 @@ export default {
             totalDistance:"",
             fuelCost:"",
             milesConvert: 1609.34,
-            costPerGallon: 5.5
+            costPerGallon: 5.5,
+            map:[]
             
         };
     },
     updated () {
         
     },
-    mounted() {},
+    mounted() {
+        //this.getMap();
+    },
     methods: {
-        
+        getMap(){
+            this.map = this.$store.getters.getMap;
+            console.info('%cmap 2: %o', 'color: red;font-size:12px', this.map);
+
+        },
         deleteAll () {
             this.$store.dispatch('deleteAll');
         },

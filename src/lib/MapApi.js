@@ -23,13 +23,8 @@ export default class MapApi {
             geocoder.geocode({ location: event.latLng }, (results, status) => {
                 let marker = this.addmarker (this.map, event.latLng, results[0].formatted_address);
                 store.dispatch('addPlaceId', {placeId: results[0].place_id, marker});
-
             });
         });
-    }
-
-    testMethod () {
-        console.info('%cLocation: %o', 'color: green;font-size:12px', 'testMethod');
     }
 
     async searchForAddress (address) {
