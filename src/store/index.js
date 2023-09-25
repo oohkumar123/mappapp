@@ -45,13 +45,6 @@ export default createStore({
         },
         
         deleteAll:  (context) => {
-            // context.state.placeIds.forEach( (placeId) => {
-            //     console.info('%cplaceId: %o', 'color: red;font-size:12px', placeId);
-            // })
-            context.state.markers.forEach( (marker) => {
-                console.info('%cmarker to delete: %o', 'color: red;font-size:12px', marker.marker);
-                marker.marker.setMap(null);
-            });
             context.state.placeIds = [];
             context.state.addresses = [];
         },
@@ -81,62 +74,39 @@ export default createStore({
             let list = context.state.placeIds;
             let prev; // leave undefined
             let cur=[];
-            let map = context.state.map;
             let lineColors = ['red','green','blue','yellow','orange','pink']
 
             for (let i = 0; i < list.length; i++) {
                 let response = await new google.maps.Geocoder().geocode({placeId: list[i].placeId});
                 cur = response.results[0];
 
-                let marker = new google.maps.Marker({ position:cur.geometry.location, label:{text:cur.formatted_address, className:'address-marker', map}});
-                console.info('%cmarker 1: %o', 'color: red;font-size:12px', marker);
-                marker.setMap(map);
-        
                 if (prev) {
                     const origin = new google.maps.LatLng(prev.geometry.location);
                     const destination = new google.maps.LatLng(cur.geometry.location);
-                    const service = new google.maps.DistanceMatrixService();
                     
+                    const service = new google.maps.DistanceMatrixService();
                     let response = await service.getDistanceMatrix({
                         origins: [origin],
                         destinations: [destination],
                         travelMode: 'DRIVING',
                         unitSystem: google.maps.UnitSystem.IMPERIAL,
                     });
-                    let directionsService = new google.maps.DirectionsService();
-                    let directionsRenderer = new google.maps.DirectionsRenderer({
-                        map: context.state.map,
-                        polylineOptions: {
-                            strokeColor: lineColors[i-1],
-                            strokeWeight: 5,
-                            strokeOpacity: 0.7
-                        }
-                    });
                 
                     if (response.rows[0].elements[0].status == 'OK') {
-                        let request = {origin: origin,destination: destination,travelMode: 'DRIVING'};
-                        directionsService.route(request, function(result, status) {
-                            if (status == 'OK') {
-                                directionsRenderer.setDirections(result);
-                                context.state.addresses[i] = {
-                                    placeId:cur.place_id,
-                                    address:cur.formatted_address, 
-                                    latlng:cur.geometry.location,
-                                    stats:{
-                                        distanceText:       response.rows[0].elements[0].distance.text, 
-                                        durationText:       response.rows[0].elements[0].duration.text,
-                                        distanceMeters:     response.rows[0].elements[0].distance.value, 
-                                        durationSeconds:    response.rows[0].elements[0].duration.value,
-                                        origin,
-                                        destination,
-                                        backgroundColor: lineColors[i-1],
-                                    }
-                                }
-                                context.state.markers[i] = {
-                                    marker
-                                };
+                        context.state.addresses[i] = {
+                            placeId:cur.place_id,
+                            address:cur.formatted_address, 
+                            latlng:cur.geometry.location,
+                            stats:{
+                                distanceText:       response.rows[0].elements[0].distance.text, 
+                                durationText:       response.rows[0].elements[0].duration.text,
+                                distanceMeters:     response.rows[0].elements[0].distance.value, 
+                                durationSeconds:    response.rows[0].elements[0].duration.value,
+                                origin,
+                                destination,
+                                backgroundColor: lineColors[i-1],
                             }
-                        });
+                        }
                         prev = cur;
                     }
                 } else {
@@ -145,10 +115,7 @@ export default createStore({
                         address:cur.formatted_address, 
                         latlng:cur.geometry.location
                     };
-                    context.state.markers[i] = {
-                        marker
-                    };
-        prev = cur;
+                    prev = cur;
                 }
             }
         },

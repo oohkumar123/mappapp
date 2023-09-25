@@ -1,6 +1,7 @@
 <template>
     <div id="map" ref="map"></div>
     <div id="search-bar">
+        <span @click="clearAll">clear all</span> 
         <label for="typeaddress"> Type address: </label>
         <input type="text" id="address" v-model="address">
         <button @click="searchAddress(myMap)">Go</button>
@@ -12,7 +13,9 @@ export default {
     data() {
         return {
             address: '420 Monte Vista Avenue, Mill Valley 94941',
-            map:{}
+            mapp:{},
+            markers:[],
+            lines:[]
         }
     },
 
@@ -26,14 +29,17 @@ export default {
         async loadMap() {
             this.$store.commit('storeMapRef', this.$refs.map);
             await this.$store.dispatch('loadMap');
-            this.map = this.$store.getters.getMap
+            this.mapp = this.$store.getters.getMap
+            console.info('%cthis.mapp: %o', 'color: red;font-size:12px', this.mapp);
         },
         
         addClick () {
-            this.map.addListener("click", (event) => {         
+            this.mapp.addListener("click", (event) => {         
                 const geocoder = new window.google.maps.Geocoder();
                 geocoder.geocode({ location: event.latLng }, (results, status) => {
                     this.$store.dispatch('addPlaceId', {placeId: results[0].place_id});
+                    this.addMarker (event.latLng, results[0].formatted_address);
+                    this.addLines();
                 });
             });
         },
@@ -42,16 +48,66 @@ export default {
             const geocoder = new window.google.maps.Geocoder();
             geocoder.geocode({ address:this.address }, (results, status) => {
                 this.$store.dispatch('addPlaceId', {placeId: results[0].place_id});
+                this.addMarker (results[0].geometry.location, results[0].formatted_address);
+                this.addLines();
             });
         },
+
+        addMarker (myLatlng, formatted_address) {
+            var marker = new google.maps.Marker({ position:myLatlng, label:{text:formatted_address, className:'address-marker', map: this.mapp}});
+            marker.setMap(this.mapp);
+            this.markers.push(()=>marker.setMap(null));
+        },
+        
+        async addLines () {
+            let addresses = this.$store.getters.addressesList;
+            let lineColors = ['red','green','blue','yellow','orange','pink']
+
+            setTimeout(async ()=>{ 
+                for (let i = 0; i < addresses.length; i++) {
+                    if (addresses[i].stats){
+                        let origin = addresses[i].stats.origin;
+                        let destination = addresses[i].stats.destination;
+                        
+                        const service = new google.maps.DistanceMatrixService();
+                        await service.getDistanceMatrix({
+                            origins: [origin],
+                            destinations: [destination],
+                            travelMode: 'DRIVING',
+                            unitSystem: google.maps.UnitSystem.IMPERIAL,
+                        });
+                        let directionsService = new google.maps.DirectionsService();
+                        let directionsRenderer = new google.maps.DirectionsRenderer({
+                            map: this.mapp,
+                            polylineOptions: {
+                                strokeColor: lineColors[i-1],
+                                strokeWeight: 5,
+                                strokeOpacity: 0.7
+                            }
+                        });
+                        let request = {origin,destination,travelMode: 'DRIVING'};
+                        directionsService.route(request, (result, status) => {
+                            if (status == 'OK') {
+                                directionsRenderer.setDirections(result);
+                                this.lines.push(()=>{
+                                    directionsRenderer.setMap(null);
+                                    directionsRenderer = null;
+                                })
+                            }
+                        }) 
+                    }
+                }
+            }, 1000);
+        },
+        
+        clearAll () {
+            this.markers.forEach((m)=>m());
+            this.lines.forEach((l)=>l());
+            this.$store.dispatch('deleteAll');
+        }
         
     },
-    computed: {
-        getMap() {
-            //this.map = ;
-        },
-    },
-}
+ }
 </script>
 
 <style lang="scss">
