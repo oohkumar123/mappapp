@@ -17,13 +17,9 @@ export default {
     mounted() {
     },
     methods: {
-        searchAddress() {
-            const geocoder = new window.google.maps.Geocoder();
-            geocoder.geocode({ address:this.address }, (results, status) => {
-                this.$store.dispatch('addPlaceId', {placeId: results[0].place_id});
-                this.addMarker (results[0].geometry.location, results[0].formatted_address);
-                this.addLines();
-            });
+        async searchAddress() {
+            let payload = await this.MapApi.searchForAddress(this.address);
+            this.$store.dispatch('addPlaceId', payload);
         },
     }
 }

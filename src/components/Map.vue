@@ -1,111 +1,98 @@
 <template>
     <div id="map" ref="map"></div>
-    <div id="search-bar">
-        <span @click="clearAll">clear all</span> 
-        <label for="typeaddress"> Type address: </label>
-        <input type="text" id="address" v-model="address">
-        <button @click="searchAddress(myMap)">Go</button>
-        <p v-if="address">{{ address }}</p>   
-    </div>
 </template>
 <script>
+import { Loader } from "@googlemaps/js-api-loader";
 export default {
     data() {
         return {
             address: '420 Monte Vista Avenue, Mill Valley 94941',
             mapp:{},
-            markers:[],
-            lines:[]
+            markers:{},
+            lines:[],
+            loader: new Loader({apiKey: "AIzaSyDlLrLnR2kTGVYhjtbu9ylIUm7eVTin2bk",version: "weekly"}),
+
         }
     },
 
     async mounted() {
-        await this.loadMap();            
-        this.addClick ();
+        this.loadMap();            
     },
 
     methods: {
         
         async loadMap() {
-            this.$store.commit('storeMapRef', this.$refs.map);
-            await this.$store.dispatch('loadMap');
-            this.mapp = this.$store.getters.getMap
-            console.info('%cthis.mapp: %o', 'color: red;font-size:12px', this.mapp);
-        },
+            let {Map} = await this.loader.importLibrary('maps');
+            this.map = new Map(this.$refs.map, {
+                center: { lat: 37.9107347, lng: -122.5640172 },
+                zoom: 14,
+                mapId: "4504f8b37365c3d0",
+            });
         
-        addClick () {
-            this.mapp.addListener("click", (event) => {         
+            this.map.addListener("click", async (event) => {         
                 const geocoder = new window.google.maps.Geocoder();
-                geocoder.geocode({ location: event.latLng }, (results, status) => {
-                    this.$store.dispatch('addPlaceId', {placeId: results[0].place_id});
-                    this.addMarker (event.latLng, results[0].formatted_address);
-                    this.addLines();
+                let response = await geocoder.geocode({ location: event.latLng })
+                //console.info('%cresults: %o', 'color: red;font-size:12px', response);
+                this.$store.commit('addPlaceId', {
+                    id: response.results[0].place_id,
+                    location: response.results[0].geometry.location,
+                    formatted_address: response.results[0].formatted_address,
                 });
+                this.addMarkers ();
+                //this.addLines();
             });
         },
         
-        searchAddress() {
-            const geocoder = new window.google.maps.Geocoder();
-            geocoder.geocode({ address:this.address }, (results, status) => {
-                this.$store.dispatch('addPlaceId', {placeId: results[0].place_id});
-                this.addMarker (results[0].geometry.location, results[0].formatted_address);
-                this.addLines();
+        addMarkers () {
+            let places = this.$store.getters.getPlaceIds;
+
+            places.forEach(place => {
+                let marker = new google.maps.Marker({ position:place.location, label:{text:place.formatted_address, className:'address-marker', map: this.map}});
+                marker.setMap(this.map);
+                this.markers[place.id] = {marker, delete:()=>marker.setMap(null)}
             });
         },
-
-        addMarker (myLatlng, formatted_address) {
-            var marker = new google.maps.Marker({ position:myLatlng, label:{text:formatted_address, className:'address-marker', map: this.mapp}});
-            marker.setMap(this.mapp);
-            this.markers.push(()=>marker.setMap(null));
-        },
         
-        async addLines () {
-            let addresses = this.$store.getters.addressesList;
-            let lineColors = ['red','green','blue','yellow','orange','pink']
+        // async addLines () {
+        //     let addresses = this.$store.getters.addressesList;
+        //     let lineColors = ['red','green','blue','yellow','orange','pink']
 
-            setTimeout(async ()=>{ 
-                for (let i = 0; i < addresses.length; i++) {
-                    if (addresses[i].stats){
-                        let origin = addresses[i].stats.origin;
-                        let destination = addresses[i].stats.destination;
+        //     setTimeout(async ()=>{ 
+        //         for (let i = 0; i < addresses.length; i++) {
+        //             if (addresses[i].stats){
+        //                 let origin = addresses[i].stats.origin;
+        //                 let destination = addresses[i].stats.destination;
                         
-                        const service = new google.maps.DistanceMatrixService();
-                        await service.getDistanceMatrix({
-                            origins: [origin],
-                            destinations: [destination],
-                            travelMode: 'DRIVING',
-                            unitSystem: google.maps.UnitSystem.IMPERIAL,
-                        });
-                        let directionsService = new google.maps.DirectionsService();
-                        let directionsRenderer = new google.maps.DirectionsRenderer({
-                            map: this.mapp,
-                            polylineOptions: {
-                                strokeColor: lineColors[i-1],
-                                strokeWeight: 5,
-                                strokeOpacity: 0.7
-                            }
-                        });
-                        let request = {origin,destination,travelMode: 'DRIVING'};
-                        directionsService.route(request, (result, status) => {
-                            if (status == 'OK') {
-                                directionsRenderer.setDirections(result);
-                                this.lines.push(()=>{
-                                    directionsRenderer.setMap(null);
-                                    directionsRenderer = null;
-                                })
-                            }
-                        }) 
-                    }
-                }
-            }, 1000);
-        },
-        
-        clearAll () {
-            this.markers.forEach((m)=>m());
-            this.lines.forEach((l)=>l());
-            this.$store.dispatch('deleteAll');
-        }
-        
+        //                 const service = new google.maps.DistanceMatrixService();
+        //                 await service.getDistanceMatrix({
+        //                     origins: [origin],
+        //                     destinations: [destination],
+        //                     travelMode: 'DRIVING',
+        //                     unitSystem: google.maps.UnitSystem.IMPERIAL,
+        //                 });
+        //                 let directionsService = new google.maps.DirectionsService();
+        //                 let directionsRenderer = new google.maps.DirectionsRenderer({
+        //                     map: this.mapp,
+        //                     polylineOptions: {
+        //                         strokeColor: lineColors[i-1],
+        //                         strokeWeight: 5,
+        //                         strokeOpacity: 0.7
+        //                     }
+        //                 });
+        //                 let request = {origin,destination,travelMode: 'DRIVING'};
+        //                 directionsService.route(request, (result, status) => {
+        //                     if (status == 'OK') {
+        //                         directionsRenderer.setDirections(result);
+        //                         this.lines.push(()=>{
+        //                             directionsRenderer.setMap(null);
+        //                             directionsRenderer = null;
+        //                         })
+        //                     }
+        //                 }) 
+        //             }
+        //         }
+        //     }, 1000);
+        // },
     },
  }
 </script>

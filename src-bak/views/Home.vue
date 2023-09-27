@@ -1,24 +1,18 @@
 <template>
     <div class="wrapper">
         <Map></Map>
-        <!-- <SearchBar></SearchBar>
         <Destinations></Destinations>
-        <JourneySummary></JourneySummary> -->
     </div>
 </template>
 
 <script>
 import Map from '../components/Map.vue';
-// import Destinations from '../components/Destinations.vue';
-// import SearchBar from '../components/SearchBar.vue';
-// import JourneySummary from '../components/JourneySummary.vue';
+import Destinations from '../components/Destinations.vue';
 
 export default {
     components: {
         Map,
-        // Destinations,
-        // SearchBar,
-        // JourneySummary
+        Destinations
     }
 }
 
