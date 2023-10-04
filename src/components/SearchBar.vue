@@ -11,7 +11,7 @@ export default {
     name: 'SearchBar',
     data() {
         return {
-            address: '420 Monte Vista Avenue, Mill Valley 94941'
+            address: ''
         }
     },
     methods: {

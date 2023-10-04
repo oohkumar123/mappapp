@@ -1,39 +1,5 @@
-move 
-delete one, move one, delete all, then add
-delete one item try to improve performance
+compile and update to githum and add to projects
+remove address from search bar
+let to const
 
 
-
-
-Call Stack 
-Last-In-First-Out (LIFO) 
-
-Callback Queue
-First-In-First-Out (FIFO) 
-
-Event Loop:
-It follows a specific order of execution:
-When the call stack is empty, the event loop checks if there are any tasks in the callback queue.
-If there are tasks in the callback queue, the event loop moves the first task to the call stack, executing it.
-The process continues as long as there are tasks in the callback queue.
-
-This mechanism allows JavaScript to handle asynchronous tasks without blocking the main execution thread. 
-
-
-closures
-"closes over" or "encloses" its surrounding lexical scope, allowing it to retain access to variable 
-Data Encapsulation: private variables and functions because the variables inside an outer function are not directly accessible from the outside.
-
-Module Pattern: Closures are often used to create modules in JavaScript, allowing you to group related variables and functions together and expose only what's necessary.
-
-Callbacks: Closures are commonly used in asynchronous programming to maintain state and context between callback functions.
-
-Functional Programming: 
-
-Avoiding Side Effects:
-Pure functions are functions that always produce the same output for the same input 
-
-Immutability:
-Functional programming encourages immutability, meaning that data, once created, cannot be changed.
-
-First-Class and Higher-Order Functions:

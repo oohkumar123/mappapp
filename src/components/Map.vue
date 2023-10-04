@@ -26,41 +26,62 @@ export default {
         this.loadMap();            
     },
     watch: {
-        triggerVar (newCount, oldCount) {
-            let keys = Object.keys(this.lines);
+        move (newCount, oldCount) {
+            const keys = Object.keys(this.lines);
             keys.forEach(((k)=>{
                 this.lines[k].delete();
             }));
-            this.addLinesList ();
+            this.addLinesList();
         },
-        triggerAll (newCount, oldCount) {
-            let keys = Object.keys(this.lines);
+        deleteAll (newCount, oldCount) {
+            const keys = Object.keys(this.lines);
             keys.forEach(((k)=>{
                 this.lines[k].delete();
             }));
             this.lines = [];
 
-            let keys2 = Object.keys(this.markers);
-            keys2.forEach(((m)=>{
+            const keysMark = Object.keys(this.markers);
+            keysMark.forEach(((m)=>{
                 this.markers[m].delete();
             }));
             this.markers = [];
-        }
+        },
+        deleteOne (newCount, oldCount) {
+            try {
+                let keys = Object.keys(this.lines);
+                keys.forEach(((k)=>{
+                    this.lines[k].delete();
+                }));
+                this.lines = [];
 
+                let keysMark = Object.keys(this.markers);
+                keysMark.forEach(((m)=>{
+                    this.markers[m].delete();
+                }));
+                this.markers = [];
+                this.addLinesList();
+                this.addMarkersList();
+            } 
+            catch (error) {
+                console.error(error);
+            }
+        }
     },
     computed: {
-        triggerVar () {
-            return this.$store.getters.getTriggerVar;
+        move () {
+            return this.$store.getters.getMove;
         },
-        triggerAll() {
-            return this.$store.getters.getTriggerVarDelete;
+        deleteAll() {
+            return this.$store.getters.getDeleteAll;
+        },
+        deleteOne() {
+            return this.$store.getters.getDeleteOne;
         }
     },
     methods: {
-        
         async loadMap() {
             const loader = new Loader({apiKey: this.apiKey, version: "weekly"});      
-            let {Map} = await loader.importLibrary('maps');
+            const {Map} = await loader.importLibrary('maps');
             this.map = new Map(this.$refs.map, {
                 center: { lat: 37.9107347, lng: -122.5640172 },
                 zoom: 14,
@@ -73,87 +94,68 @@ export default {
                 this.addPlace(response);
             });
         },
-        
         async searchAddress(address) {
             const geocoder = new window.google.maps.Geocoder()       
             const response = await geocoder.geocode({ address });
             this.addPlace(response);
         },       
-        
         addPlace (response) {
-            let {place_id, geometry:{location:location}, formatted_address} = response.results[0];
+            const {place_id, geometry:{location:location}, formatted_address} = response.results[0];
             this.$store.commit('addPlace', {
                 place_id,
                 location,
                 formatted_address,
             });
-            this.addMarkers (place_id, location, formatted_address);
-            this.addLines(place_id, location);
-
+            this.addMarker (place_id, location, formatted_address);
+            this.addLine(place_id, location);
         },
-
-        addMarkers (place_id, location, formatted_address) {
-            let marker = new google.maps.Marker({ position:location, label:{text:formatted_address, className:'address-marker', map: this.map}});
+        addMarker (place_id, location, formatted_address) {
+            const marker = new google.maps.Marker({ position:location, label:{text:formatted_address, className:'address-marker', map: this.map}});
             marker.setMap(this.map);
             this.markers[place_id] = {delete:()=>marker.setMap(null)}
         },
-        
-        async addLines (place_id, destination) {
-            let places = this.$store.getters.getPlaces;
-            let origin = places.at(-2);
+        addMarkersList () {
+            const places = this.$store.getters.getPlaces;
+            for (let i = 0; i < places.length; i++) {
+                this.addMarker (places[i].place_id, places[i].location, places[i].formatted_address) 
+            }
+        },
+        addLine (place_id, destination) {
+            const places = this.$store.getters.getPlaces;
+            const origin = places.at(-2);
             if (origin) {
-                let lineColors = ['red','green','blue','yellow','orange','pink'];
-                let colorCount = Object.values(this.lines).length;
-                
-                let directionsService = new google.maps.DirectionsService();
-                let directionsRenderer = new google.maps.DirectionsRenderer({
-                    map: this.map,
-                    polylineOptions: {
-                        strokeColor: lineColors[colorCount],
-                        strokeWeight: 5,
-                        strokeOpacity: 0.7
-                    }
-                });
-                let request = {origin:origin.location,destination,travelMode: 'DRIVING'};
-                directionsService.route(request, (result, status) => {
-                    if (status == 'OK') {
-                        directionsRenderer.setDirections(result);
-                        this.lines[place_id] = {delete:()=>{directionsRenderer.setMap(null);directionsRenderer = null;}}
-                    }
-                }) 
+                this.createLine (place_id, origin.location, destination) ;
             }
         },
         addLinesList () {
-            let places = this.$store.getters.getPlaces;
-            
+            const places = this.$store.getters.getPlaces;
             for (let i = 1; i < places.length; i++) {
-                let origin = places[i-1];
-                let destination = places[i];
-                let lineColors = ['red','green','blue','yellow','orange','pink'];
-                let colorCount = i;
-                
-                let directionsService = new google.maps.DirectionsService();
-                let directionsRenderer = new google.maps.DirectionsRenderer({
-                    map: this.map,
-                    polylineOptions: {
-                        strokeColor: lineColors[colorCount],
-                        strokeWeight: 5,
-                        strokeOpacity: 0.7
-                    }
-                });
-                let request = {
-                    origin:origin.location,
-                    destination:destination.location,
-                    travelMode: 'DRIVING'
-                };
-                directionsService.route(request, (result, status) => {
-                    if (status == 'OK') {
-                        directionsRenderer.setDirections(result);
-                        this.lines[destination.place_id] = {delete:()=>{directionsRenderer.setMap(null);directionsRenderer = null;}}
-                    }
-                }) 
+                const origin = places[i-1];
+                const destination = places[i];
+                this.createLine (places[i].place_id, origin.location, destination.location);
             }
         },
+        createLine (place_id, origin, destination) {
+            const lineColors = ['red','green','blue','yellow','orange','pink'];
+            const colorCount = Object.values(this.lines).length;
+            
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer({
+                map: this.map,
+                polylineOptions: {
+                    strokeColor: lineColors[colorCount],
+                    strokeWeight: 5,
+                    strokeOpacity: 0.7
+                }
+            });
+            const request = {origin,destination,travelMode: 'DRIVING'};
+            directionsService.route(request, (result, status) => {
+                if (status == 'OK') {
+                    directionsRenderer.setDirections(result);
+                    this.lines[place_id] = {delete:()=>{directionsRenderer.setMap(null);directionsRenderer = null;}}
+                }
+            }) 
+        }, 
     },
  }
 </script>

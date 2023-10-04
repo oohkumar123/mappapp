@@ -1,5 +1,6 @@
 <template>
     <div class="wrapper">
+        <header><h1>Kumar's Journey Planner</h1></header>
         <Map></Map>
         <Destinations></Destinations>
     </div>
@@ -23,10 +24,18 @@ export default {
 <style lang="scss">
 .wrapper {
     width: 80%;
-    padding:20px;;
+    padding:15px;;
     background-color: $colorA;
     margin:auto;
     margin-bottom: 20px;
+    header {
+        background-color: $colorA; 
+        h1 {
+            color: $colorD;
+            font-size: 40px;
+            padding-bottom: 10px;
+        }
+    }
 
 }
 </style>

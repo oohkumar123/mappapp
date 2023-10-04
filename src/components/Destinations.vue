@@ -26,7 +26,7 @@
                     </div>
                     <div class="updown">
                         <div class="up"     v-if="index > 0" @click="moveUp(index)">&uarr;</div>
-                        <div class="delete" @click="deleteLoc(index)">&#10026;</div>
+                        <div class="delete" @click="deleteOne(index)">&#10026;</div>
                         <div class="down"   v-if="index != myList.length-1" @click="moveDown(index)">&darr;</div>
                     </div>
                 </div>
@@ -65,6 +65,9 @@ export default {
         }
     },
     methods: {
+        deleteOne(index) {
+            this.$store.commit("deleteOne", index);
+        },
         deleteAll () {
             this.$store.commit('deleteAll');
         },
@@ -77,27 +80,27 @@ export default {
             this.myList = await this.listPlaces();
         },
         async listPlaces() {
-            let places = this.$store.getters.getPlaces;
-            let lineColors = ['red','green','blue','yellow','orange','pink']
-            let updatedPlaces = [];
+            const places = this.$store.getters.getPlaces;
+            const lineColors = ['red','green','blue','yellow','orange','pink']
+            const updatedPlaces = [];
 
             for (const key in places) { // change to each
                 
                 if (key!=='0') {
-                    let origin = places[key-1].location;
-                    let destination = places[key].location;
+                    const origin = places[key-1].location;
+                    const destination = places[key].location;
                     
                     const service = new google.maps.DistanceMatrixService();
-                    let response = await service.getDistanceMatrix({
+                    const response = await service.getDistanceMatrix({
                         origins: [origin],
                         destinations: [destination],
                         travelMode: 'DRIVING',
                         unitSystem: google.maps.UnitSystem.IMPERIAL,
                     });
                     
-                    let {distance: {text:distanceText, value:distanceMeters},duration:{text:durationText, value:durationSeconds}} = response.rows[0].elements[0];
+                    const {distance: {text:distanceText, value:distanceMeters},duration:{text:durationText, value:durationSeconds}} = response.rows[0].elements[0];
                     
-                    let stats = {
+                    const stats = {
                         distanceText,
                         durationText,
                         distanceMeters,
@@ -105,7 +108,7 @@ export default {
                         backgroundColor: lineColors[key-1],
                     }
 
-                    let placesStats = {...places[key], stats};
+                    const placesStats = {...places[key], stats};
                     updatedPlaces.push(placesStats);
 
                 } else {
@@ -123,10 +126,9 @@ export default {
 <style lang="scss">
     #destinations {
         background-color: $colorB;
-        width: 650px;
         margin: auto;
         text-align: center;
-        margin-top:20px;
+        margin-top:15px;
         
         .title {
             display: flex;
@@ -143,6 +145,8 @@ export default {
                 margin: 0;
                 text-align: center;
                 flex: 1;
+                padding: 10px 0;
+                font-size: 30px;
             }
             
             .clear-all {
@@ -165,7 +169,6 @@ export default {
                 .details {
                     width: 100%;
                     display: flex;
-                    position: relative;
 
                     .updown {
                         display: flex;

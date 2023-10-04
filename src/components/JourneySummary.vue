@@ -62,10 +62,9 @@ export default {
 <style lang="scss">
 #journey-summary {
     background-color: $colorB;
-    width: 650px;
     margin: auto;
     text-align: center;
-    margin-top: 20px;
+    margin-top: 15px;
     padding: 10px 20px 10px 20px;
     box-sizing: border-box;
     border-radius: 20px;;
@@ -75,6 +74,9 @@ export default {
     }
     h2 {
         color: white;
+        font-size: 20px;
+        font-weight: bold;
+        padding-bottom: 5px;;
     }
     p {
         color: white;

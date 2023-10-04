@@ -3,41 +3,49 @@ import { createStore } from "vuex";
 export default createStore({
     state: {
         places: [],
-        myTriggerVar:0,
-        myTriggerVarDelete:0
+        triggerMove:0,
+        triggerDeleteAll:0,
+        triggerDeleteOne:0
     },
     getters: {
         getPlaces: (state) => {
             return state.places;
         },
-        getTriggerVar: (state) => {
-            return state.myTriggerVar;
+        getMove: (state) => {
+            return state.triggerMove;
         },
-        getTriggerVarDelete: (state) => {
-            return state.myTriggerVarDelete;
+        getDeleteAll: (state) => {
+            return state.triggerDeleteAll;
+        },
+        getDeleteOne: (state) => {
+            return state.triggerDeleteOne;
         },
     },
     mutations: {
+        deleteOne: (state, placeId) => {
+            let temp = state.places.filter((item, index) => index!==placeId);
+            state.places = temp;
+            state.triggerDeleteOne++;
+        },
         deleteAll:  (state) => {
             state.places = [];
-            state.myTriggerVarDelete++
-        },
-        addPlace:  (state, payload) => {
-            state.places.push(payload);
+            state.triggerDeleteAll++
         },
         moveUp(state, index) {
             let temp = state.places[index];
             state.places[index] = state.places[index-1];
             state.places[index-1] = temp;
-            state.myTriggerVar++
+            state.triggerMove++
         },
         moveDown(state, index) {
             let temp = state.places[index];
             state.places[index] = state.places[index+1];
             state.places[index+1] = temp;
-            state.myTriggerVar++
-
-        }
+            state.triggerMove++
+        },
+        addPlace:  (state, payload) => {
+            state.places.push(payload);
+        },
     }
 });
 
