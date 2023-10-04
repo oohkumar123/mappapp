@@ -7,5 +7,13 @@ module.exports = defineConfig({
                 additionalData: `@import "@/assets/styles/scss/_global.scss";`
             }
         }
-    }
+    },
+    publicPath: process.env.NODE_ENV === 'production'? '/mappapp/' : '/',
+    chainWebpack: config => {
+        config.plugin('html')
+          .tap(args => {
+            args[0].minify = false
+            return args
+          })
+      }
 })
