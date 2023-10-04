@@ -5,25 +5,18 @@
         <button @click="searchAddress">Go</button>
         <p v-if="address">{{ address }}</p>   
     </div>
-
 </template>
 <script>
 export default {
+    name: 'SearchBar',
     data() {
         return {
             address: '420 Monte Vista Avenue, Mill Valley 94941'
         }
     },
-    mounted() {
-    },
     methods: {
         searchAddress() {
-            const geocoder = new window.google.maps.Geocoder();
-            geocoder.geocode({ address:this.address }, (results, status) => {
-                this.$store.dispatch('addPlaceId', {placeId: results[0].place_id});
-                this.addMarker (results[0].geometry.location, results[0].formatted_address);
-                this.addLines();
-            });
+            this.$emit('sendAddress', this.address)            
         },
     }
 }

@@ -1,98 +1,159 @@
 <template>
     <div id="map" ref="map"></div>
+    <SearchBar @sendAddress="searchAddress"></SearchBar>
+
 </template>
 <script>
 import { Loader } from "@googlemaps/js-api-loader";
+import SearchBar from './SearchBar.vue';
+
 export default {
+    components: {
+        SearchBar
+    },
     data() {
         return {
             address: '420 Monte Vista Avenue, Mill Valley 94941',
             mapp:{},
             markers:{},
             lines:[],
-            loader: new Loader({apiKey: "AIzaSyDlLrLnR2kTGVYhjtbu9ylIUm7eVTin2bk",version: "weekly"}),
-
+            apiKey: "AIzaSyDlLrLnR2kTGVYhjtbu9ylIUm7eVTin2bk",
+            count: 1
+            
         }
     },
-
     async mounted() {
         this.loadMap();            
     },
+    watch: {
+        triggerVar (newCount, oldCount) {
+            let keys = Object.keys(this.lines);
+            keys.forEach(((k)=>{
+                this.lines[k].delete();
+            }));
+            this.addLinesList ();
+        },
+        triggerAll (newCount, oldCount) {
+            let keys = Object.keys(this.lines);
+            keys.forEach(((k)=>{
+                this.lines[k].delete();
+            }));
+            this.lines = [];
 
+            let keys2 = Object.keys(this.markers);
+            keys2.forEach(((m)=>{
+                this.markers[m].delete();
+            }));
+            this.markers = [];
+        }
+
+    },
+    computed: {
+        triggerVar () {
+            return this.$store.getters.getTriggerVar;
+        },
+        triggerAll() {
+            return this.$store.getters.getTriggerVarDelete;
+        }
+    },
     methods: {
         
         async loadMap() {
-            let {Map} = await this.loader.importLibrary('maps');
+            const loader = new Loader({apiKey: this.apiKey, version: "weekly"});      
+            let {Map} = await loader.importLibrary('maps');
             this.map = new Map(this.$refs.map, {
                 center: { lat: 37.9107347, lng: -122.5640172 },
                 zoom: 14,
                 mapId: "4504f8b37365c3d0",
             });
         
-            this.map.addListener("click", async (event) => {         
-                const geocoder = new window.google.maps.Geocoder();
-                let response = await geocoder.geocode({ location: event.latLng })
-                //console.info('%cresults: %o', 'color: red;font-size:12px', response);
-                this.$store.commit('addPlaceId', {
-                    id: response.results[0].place_id,
-                    location: response.results[0].geometry.location,
-                    formatted_address: response.results[0].formatted_address,
+            this.map.addListener("click", async (event) => {  
+                const geocoder = new window.google.maps.Geocoder()       
+                const response = await geocoder.geocode({ location: event.latLng });
+                this.addPlace(response);
+            });
+        },
+        
+        async searchAddress(address) {
+            const geocoder = new window.google.maps.Geocoder()       
+            const response = await geocoder.geocode({ address });
+            this.addPlace(response);
+        },       
+        
+        addPlace (response) {
+            let {place_id, geometry:{location:location}, formatted_address} = response.results[0];
+            this.$store.commit('addPlace', {
+                place_id,
+                location,
+                formatted_address,
+            });
+            this.addMarkers (place_id, location, formatted_address);
+            this.addLines(place_id, location);
+
+        },
+
+        addMarkers (place_id, location, formatted_address) {
+            let marker = new google.maps.Marker({ position:location, label:{text:formatted_address, className:'address-marker', map: this.map}});
+            marker.setMap(this.map);
+            this.markers[place_id] = {delete:()=>marker.setMap(null)}
+        },
+        
+        async addLines (place_id, destination) {
+            let places = this.$store.getters.getPlaces;
+            let origin = places.at(-2);
+            if (origin) {
+                let lineColors = ['red','green','blue','yellow','orange','pink'];
+                let colorCount = Object.values(this.lines).length;
+                
+                let directionsService = new google.maps.DirectionsService();
+                let directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: this.map,
+                    polylineOptions: {
+                        strokeColor: lineColors[colorCount],
+                        strokeWeight: 5,
+                        strokeOpacity: 0.7
+                    }
                 });
-                this.addMarkers ();
-                //this.addLines();
-            });
+                let request = {origin:origin.location,destination,travelMode: 'DRIVING'};
+                directionsService.route(request, (result, status) => {
+                    if (status == 'OK') {
+                        directionsRenderer.setDirections(result);
+                        this.lines[place_id] = {delete:()=>{directionsRenderer.setMap(null);directionsRenderer = null;}}
+                    }
+                }) 
+            }
         },
-        
-        addMarkers () {
-            let places = this.$store.getters.getPlaceIds;
-
-            places.forEach(place => {
-                let marker = new google.maps.Marker({ position:place.location, label:{text:place.formatted_address, className:'address-marker', map: this.map}});
-                marker.setMap(this.map);
-                this.markers[place.id] = {marker, delete:()=>marker.setMap(null)}
-            });
+        addLinesList () {
+            let places = this.$store.getters.getPlaces;
+            
+            for (let i = 1; i < places.length; i++) {
+                let origin = places[i-1];
+                let destination = places[i];
+                let lineColors = ['red','green','blue','yellow','orange','pink'];
+                let colorCount = i;
+                
+                let directionsService = new google.maps.DirectionsService();
+                let directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: this.map,
+                    polylineOptions: {
+                        strokeColor: lineColors[colorCount],
+                        strokeWeight: 5,
+                        strokeOpacity: 0.7
+                    }
+                });
+                let request = {
+                    origin:origin.location,
+                    destination:destination.location,
+                    travelMode: 'DRIVING'
+                };
+                directionsService.route(request, (result, status) => {
+                    if (status == 'OK') {
+                        directionsRenderer.setDirections(result);
+                        this.lines[destination.place_id] = {delete:()=>{directionsRenderer.setMap(null);directionsRenderer = null;}}
+                    }
+                }) 
+            }
         },
-        
-        // async addLines () {
-        //     let addresses = this.$store.getters.addressesList;
-        //     let lineColors = ['red','green','blue','yellow','orange','pink']
-
-        //     setTimeout(async ()=>{ 
-        //         for (let i = 0; i < addresses.length; i++) {
-        //             if (addresses[i].stats){
-        //                 let origin = addresses[i].stats.origin;
-        //                 let destination = addresses[i].stats.destination;
-                        
-        //                 const service = new google.maps.DistanceMatrixService();
-        //                 await service.getDistanceMatrix({
-        //                     origins: [origin],
-        //                     destinations: [destination],
-        //                     travelMode: 'DRIVING',
-        //                     unitSystem: google.maps.UnitSystem.IMPERIAL,
-        //                 });
-        //                 let directionsService = new google.maps.DirectionsService();
-        //                 let directionsRenderer = new google.maps.DirectionsRenderer({
-        //                     map: this.mapp,
-        //                     polylineOptions: {
-        //                         strokeColor: lineColors[i-1],
-        //                         strokeWeight: 5,
-        //                         strokeOpacity: 0.7
-        //                     }
-        //                 });
-        //                 let request = {origin,destination,travelMode: 'DRIVING'};
-        //                 directionsService.route(request, (result, status) => {
-        //                     if (status == 'OK') {
-        //                         directionsRenderer.setDirections(result);
-        //                         this.lines.push(()=>{
-        //                             directionsRenderer.setMap(null);
-        //                             directionsRenderer = null;
-        //                         })
-        //                     }
-        //                 }) 
-        //             }
-        //         }
-        //     }, 1000);
-        // },
     },
  }
 </script>

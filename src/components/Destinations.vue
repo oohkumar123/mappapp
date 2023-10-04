@@ -1,12 +1,12 @@
 <template>
-    <div id="destinations" v-if="listDestinations ().length">
+    <div id="destinations" v-if="myList.length">
         <div class="title">
             <div class="space">&nbsp;</div>
             <h2 @click="getMap">Destinations List </h2>
-            <div class="clear-all" @click="deleteAll">Clear all</div>           
+            <div class="clear-all" @click="deleteAll">Delete all</div>           
         </div> 
         <div class="destinations-list sortable-list" ref="sortableList">
-            <article class="item" :data-placeId="item.placeId" draggable="true" ref="item" v-for="(item, index) in listDestinations ()" :key="index">
+            <article class="item" :data-placeId="index" draggable="true" ref="item" v-for="(item, index) in myList" :key="index">
                 <div class="stats" v-if="item.stats" :style="{ background: item.stats.backgroundColor}">
                     Distance: {{ item.stats.distanceText }}
                     <br>
@@ -16,11 +16,10 @@
                     <div class="order"><p>{{ index+1 }}</p></div>
                     <div class="address">
                         <p class="street">
-                            <!-- {{ item.placeId }}   
-                            <br>-->
-                            {{ item.address }} 
+                            {{ item.place_id }} <br>
+                            {{ item.formatted_address }} 
                             <br>
-                            {{ item.latlng }} 
+                            {{ item.location }} 
                         </p>
                         <p class="latlon">
                         </p>
@@ -28,99 +27,96 @@
                     <div class="updown">
                         <div class="up"     v-if="index > 0" @click="moveUp(index)">&uarr;</div>
                         <div class="delete" @click="deleteLoc(index)">&#10026;</div>
-                        <div class="down"   v-if="index != listDestinations ().length-1" @click="moveDown(index)">&darr;</div>
+                        <div class="down"   v-if="index != myList.length-1" @click="moveDown(index)">&darr;</div>
                     </div>
                 </div>
             </article>
         </div>
     </div>
-    <JourneySummary :totalTime="totalTime" :totalDistance="totalDistance" :fuelCost="fuelCost" v-if="listDestinations ().length>1"></JourneySummary>
+    <JourneySummary :destinations="myList" v-if="(myList.length > 0)"></JourneySummary>
+
 </template>
 <script>
 import JourneySummary from './JourneySummary.vue';
-import { mapState } from 'vuex';
+
 export default {
     components: {
         JourneySummary
     },
     data() {
         return {
+            myList: [],
             totalTime:"",
             totalDistance:"",
             fuelCost:"",
             milesConvert: 1609.34,
             costPerGallon: 5.5,
-            map:[]
-            
+
         };
     },
-    emits: ["deleteAll"],
-    updated () {
-        
+    watch: {
+        async placeAdded (newCount, oldCount) {
+            this.myList = await this.listPlaces();
+        }
     },
-    mounted() {
-        //this.getMap();
+    computed: {
+        placeAdded () {
+            return this.$store.getters.getPlaces.length
+        }
     },
     methods: {
-        clearAll () {
-            this.$store.dispatch('deleteAll');
-        },
-        getMap(){
-            this.map = this.$store.getters.getMap;
-        },
         deleteAll () {
-            this.$store.dispatch('deleteAll');
+            this.$store.commit('deleteAll');
         },
-        deleteLoc(index) {
-            this.$store.dispatch("deleteLoc", index);
+        async moveUp(index) {
+            this.$store.commit("moveUp", index);
+            this.myList = await this.listPlaces();
         },
-        moveUp(index) {
-            this.$store.dispatch("moveUp", index);
+        async moveDown(index) {
+            this.$store.commit("moveDown", index);
+            this.myList = await this.listPlaces();
         },
-        
-        moveDown(index) {
-            this.$store.dispatch("moveDown", index);
-        },
-        
-        listDestinations () {
-            this.calculateTotals (this.$store.getters.addressesList);
-            return this.$store.getters.addressesList;
-        },
+        async listPlaces() {
+            let places = this.$store.getters.getPlaces;
+            let lineColors = ['red','green','blue','yellow','orange','pink']
+            let updatedPlaces = [];
 
-        calculateTotals (destinations) {
-            let totalSeconds = 0;
-            let totalMeters = 0;
-            destinations.forEach (item => {
-                if (item?.stats) {
-                    totalSeconds += item.stats.durationSeconds;
-                    totalMeters += item.stats.distanceMeters;
+            for (const key in places) { // change to each
+                
+                if (key!=='0') {
+                    let origin = places[key-1].location;
+                    let destination = places[key].location;
+                    
+                    const service = new google.maps.DistanceMatrixService();
+                    let response = await service.getDistanceMatrix({
+                        origins: [origin],
+                        destinations: [destination],
+                        travelMode: 'DRIVING',
+                        unitSystem: google.maps.UnitSystem.IMPERIAL,
+                    });
+                    
+                    let {distance: {text:distanceText, value:distanceMeters},duration:{text:durationText, value:durationSeconds}} = response.rows[0].elements[0];
+                    
+                    let stats = {
+                        distanceText,
+                        durationText,
+                        distanceMeters,
+                        durationSeconds,
+                        backgroundColor: lineColors[key-1],
+                    }
+
+                    let placesStats = {...places[key], stats};
+                    updatedPlaces.push(placesStats);
+
+                } else {
+                    updatedPlaces.push(places[key]);
                 }
-            })
-            this.totalTime = this.getTotalTime(totalSeconds);
-            this.totalDistance = this.getTotalDistance(totalMeters);
-            this.fuelCost = this.getTotalFuelCost(totalMeters)
+            }
+            return updatedPlaces;
         },
         
-        getTotalTime(totalSeconds) {
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            return (hours) ? hours + " hours " + minutes + " minutes": minutes + " minutes";
-        },
 
-        getTotalDistance(totalMeters) {
-            const miles = totalMeters / this.milesConvert;
-            return miles.toFixed(1) + " miles";
-        },
-        
-        getTotalFuelCost(totalMeters) {
-            const miles = totalMeters / this.milesConvert;
-            const gallonsUsed = (miles/21);
-            const cost = this.costPerGallon * gallonsUsed;
-            return "$"+cost.toFixed(2) + " at $"+this.costPerGallon+" per gallon";
-        }
-
-    },
-    computed: {}
+    }
 };
 </script>
 
