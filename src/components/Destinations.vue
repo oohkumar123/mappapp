@@ -16,7 +16,7 @@
                     <div class="order"><p>{{ index+1 }}</p></div>
                     <div class="address">
                         <p class="street">
-                            {{ item.place_id }} <br>
+                            <!-- {{ item.place_id }} <br> -->
                             {{ item.formatted_address }} 
                             <br>
                             {{ item.location }} 
