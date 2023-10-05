@@ -27,24 +27,32 @@ export default {
     },
     watch: {
         move (newCount, oldCount) {
-            const keys = Object.keys(this.lines);
-            keys.forEach(((k)=>{
-                this.lines[k].delete();
-            }));
-            this.addLinesList();
+            try {
+                let keys = Object.keys(this.lines);
+                keys.forEach(((k)=>{
+                    this.lines[k].delete();
+                }));
+                this.lines = [];
+                this.addLinesList();
+            } catch (error) {
+            }
         },
         deleteAll (newCount, oldCount) {
-            const keys = Object.keys(this.lines);
-            keys.forEach(((k)=>{
-                this.lines[k].delete();
-            }));
-            this.lines = [];
+            try {
+                let keys = Object.keys(this.lines);
+                keys.forEach(((k)=>{
+                    this.lines[k].delete();
+                }));
+                this.lines = [];
 
-            const keysMark = Object.keys(this.markers);
-            keysMark.forEach(((m)=>{
-                this.markers[m].delete();
-            }));
-            this.markers = [];
+                let keysMark = Object.keys(this.markers);
+                keysMark.forEach(((m)=>{
+                    this.markers[m].delete();
+                }));
+                this.markers = [];
+            } catch (error) {
+                console.info('%cerror: %o', 'color: red;font-size:12px', error);
+            }
         },
         deleteOne (newCount, oldCount) {
             try {
@@ -62,13 +70,14 @@ export default {
                 this.addLinesList();
                 this.addMarkersList();
             } 
+            
             catch (error) {
-                console.error(error);
+                console.info('%cerror: %o', 'color: red;font-size:12px', error);
             }
         }
     },
     computed: {
-        move () {
+        move() {
             return this.$store.getters.getMove;
         },
         deleteAll() {
@@ -127,20 +136,20 @@ export default {
                 this.createLine (place_id, origin.location, destination) ;
             }
         },
-        addLinesList () {
+        async addLinesList () {
             const places = this.$store.getters.getPlaces;
             for (let i = 1; i < places.length; i++) {
                 const origin = places[i-1];
                 const destination = places[i];
-                this.createLine (places[i].place_id, origin.location, destination.location);
+                await this.createLine (places[i].place_id, origin.location, destination.location);
             }
         },
-        createLine (place_id, origin, destination) {
+        async createLine (place_id, origin, destination) {
             const lineColors = ['red','green','blue','yellow','orange','pink'];
             const colorCount = Object.values(this.lines).length;
             
-            const directionsService = new google.maps.DirectionsService();
-            const directionsRenderer = new google.maps.DirectionsRenderer({
+            let directionsService = new google.maps.DirectionsService();
+            let directionsRenderer = new google.maps.DirectionsRenderer({
                 map: this.map,
                 polylineOptions: {
                     strokeColor: lineColors[colorCount],
@@ -149,12 +158,16 @@ export default {
                 }
             });
             const request = {origin,destination,travelMode: 'DRIVING'};
-            directionsService.route(request, (result, status) => {
-                if (status == 'OK') {
-                    directionsRenderer.setDirections(result);
-                    this.lines[place_id] = {delete:()=>{directionsRenderer.setMap(null);directionsRenderer = null;}}
+            let result = await directionsService.route(request);
+            if (result.status == 'OK') {
+                directionsRenderer.setDirections(result);
+                this.lines[place_id] = {
+                    delete:()=>{
+                        directionsRenderer.setMap(null);
+                        directionsRenderer = null;
+                    }
                 }
-            }) 
+            }
         }, 
     },
  }
