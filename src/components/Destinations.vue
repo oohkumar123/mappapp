@@ -16,7 +16,7 @@
                     <div class="order"><p>{{ index+1 }}</p></div>
                     <div class="address">
                         <p class="street">
-                            <!-- {{ item.place_id }} <br> test me-->
+                            <!-- {{ item.place_id }} <br> test me again-->
                             {{ item.formatted_address }} 
                             <br>
                             {{ item.location }} 
