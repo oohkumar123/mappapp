@@ -2,7 +2,7 @@ set -e
 
 
 git add -A
-git commit -m "update $(date +%D %T)"
+git commit -m "update $(date +%m-%d-%Y %T)"
 git push -f git@github.com:oohkumar123/mappapp.git master:master
 
 npm run build
