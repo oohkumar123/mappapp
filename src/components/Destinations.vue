@@ -18,8 +18,7 @@
                         <p class="street">
                             <!-- {{ item.place_id }} <br> test me again-->
                             {{ item.formatted_address }} 
-                            <br>
-                            {{ item.location }} 
+                            <!-- <br> {{ item.location }}  -->
                         </p>
                         <p class="latlon">
                         </p>
