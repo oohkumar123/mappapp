@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkMapApp"]=self["webpackChunkMapApp"]||[]).push([[443],{2800:function(n,a,u){u.r(a),u.d(a,{default:function(){return f}});var t=u(3396);const e={class:"about"},r=(0,t._)("h1",null,"This is an about page",-1),s=[r];function p(n,a){return(0,t.wg)(),(0,t.iD)("div",e,s)}var c=u(89);const i={},o=(0,c.Z)(i,[["render",p]]);var f=o}}]);
+//# sourceMappingURL=about.cf5beb47.js.map
