@@ -18,7 +18,7 @@
                         <p class="street">
                             <!-- {{ item.place_id }} <br> test me again-->
                             {{ item.formatted_address }} 
-                            <!-- <br> {{ item.location }}  111-->
+                            <!-- <br> {{ item.location }}  11retrey1-->
                         </p>
                         <p class="latlon">
                         </p>
